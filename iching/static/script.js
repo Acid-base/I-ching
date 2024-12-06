@@ -1,99 +1,106 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const generateBtn = document.getElementById('generate-btn');
-    const result = document.getElementById('result');
-    const hexagramNumber = document.getElementById('hexagram-number');
-    const changingLines = document.getElementById('changing-lines');
-    const readingContent = document.getElementById('reading-content');
-    const divProcess = document.getElementById('divination-process');
-    const processSteps = document.querySelectorAll('.process-step');
-    const hexagramLines = document.getElementById('hexagram-lines');
-
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+function generateHexagram() {
+    let lines = [];
+    for (let i = 0; i < 6; i++) {
+        let line = Math.random() < 0.5 ? 0 : 1;
+        lines.push(line);
     }
+    return lines;
+}
 
-    function createHexagramLine(isYang, isChanging) {
-        const line = document.createElement('div');
-        line.className = `line ${isYang ? 'yang' : 'yin'} ${isChanging ? 'changing' : ''}`;
-        return line;
+function calculateHexagramNumber(hexagram) {
+    let binaryString = "";
+    for (let i = hexagram.length - 1; i >= 0; i--) {
+        binaryString += hexagram[i].toString();
     }
+    return parseInt(binaryString, 2) + 1;
+}
 
-    function updateProcessStep(stepIndex) {
-        processSteps.forEach((step, index) => {
-            step.classList.toggle('active', index === stepIndex);
-        });
+function getChangingLines(lines) {
+    return lines.map((line, index) => (line === 0 || line === 1) ? index + 1 : null).filter(Number.isInteger);
+}
+
+function displayHexagram(lines, changingLines) {
+    const hexagramDiv = document.getElementById('hexagram');
+    if (!hexagramDiv) {
+        console.error('Hexagram div not found');
+        return;
     }
+    hexagramDiv.innerHTML = '';
 
-    async function animateProcess() {
-        divProcess.classList.remove('hidden');
-        result.classList.add('hidden');
+    lines.forEach((line, index) => {
+        const lineDiv = document.createElement('div');
+        lineDiv.classList.add('line');
 
-        // Animate through each step
-        for (let i = 0; i < processSteps.length; i++) {
-            updateProcessStep(i);
-            await sleep(1000); // Wait 1 second between steps
+        if (line === 1) {
+            lineDiv.classList.add('yang');
+        } else {
+            lineDiv.classList.add('yin');
         }
-    }
 
-    function displayHexagram(lines, changingLineNumbers) {
-        hexagramLines.innerHTML = '';
-        
-        // Create lines from top to bottom
-        for (let i = 5; i >= 0; i--) {
-            const isYang = lines[i] === 1;
-            const isChanging = changingLineNumbers.includes(i + 1);
-            const line = createHexagramLine(isYang, isChanging);
-            hexagramLines.appendChild(line);
+        if (changingLines.includes(index + 1)) {
+            lineDiv.classList.add('changing');
         }
-    }
 
-    generateBtn.addEventListener('click', async () => {
-        try {
-            generateBtn.disabled = true;
-            generateBtn.textContent = 'Consulting the Oracle...';
-            
-            // Start the process animation
-            await animateProcess();
-            
-            const response = await fetch('/reading', {
-                method: 'POST'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to generate reading');
-            }
-            
-            const data = await response.json();
-            
-            // Update hexagram number
-            hexagramNumber.textContent = data.hexagram_number;
-            
-            // Display changing lines
-            if (data.changing_lines.length > 0) {
-                changingLines.textContent = `Changing lines: ${data.changing_lines.join(', ')}`;
-            } else {
-                changingLines.textContent = 'No changing lines';
-            }
-            
-            // Display hexagram
-            displayHexagram(data.lines, data.changing_lines);
-            
-            // Update reading text
-            readingContent.textContent = data.reading;
-            
-            // Show result
-            divProcess.classList.add('hidden');
-            result.classList.remove('hidden');
-            
-            // Smooth scroll to result
-            result.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to generate reading. Please try again.');
-        } finally {
-            generateBtn.disabled = false;
-            generateBtn.textContent = 'Begin New Divination';
-        }
+        hexagramDiv.appendChild(lineDiv);
     });
-}); 
+}
+
+function displayReading(hexagramData) {
+    const readingDiv = document.getElementById('reading');
+    if (!readingDiv) {
+        console.error('Reading div not found');
+        return;
+    }
+    
+    if (!hexagramData || !hexagramData.reading) {
+        readingDiv.innerHTML = "No reading could be generated";
+        return;
+    }
+
+    const reading = hexagramData.reading;
+    const relatingHexagram = hexagramData.relating_hexagram;
+
+    let resultText = `
+        <h2>${reading.name} (${reading.chinese} - ${hexagramData.hexagram_number})</h2>
+        <p>${reading.description}</p>
+        <p><b>Judgment:</b> ${reading.judgment}</p>
+        <p><b>Image:</b> ${reading.image}</p>
+    `;
+
+    if (hexagramData.changing_lines.length > 0) {
+        resultText += "<h3>Changing Lines:</h3>";
+        for (const lineNumber in reading.lines) {
+            resultText += `<p><b>Line ${lineNumber}:</b> ${reading.lines[lineNumber]}</p>`;
+        }
+
+        if (relatingHexagram) {
+            resultText += `
+                <h3>Relating Hexagram:</h3>
+                <h2>${relatingHexagram.name} (${relatingHexagram.chinese} - ${relatingHexagram.number})</h2>
+                <p>${relatingHexagram.description}</p>
+            `;
+        }
+    }
+
+    readingDiv.innerHTML = resultText;
+}
+
+async function generateReading() {
+    const hexagram = generateHexagram();
+    const changingLines = getChangingLines(hexagram);
+    displayHexagram(hexagram, changingLines);
+
+    try {
+        const response = await fetch('/reading', { method: 'POST' });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Error ${response.status}: ${errorData.detail}`);
+        }
+        const readingData = await response.json();
+        displayReading(readingData);
+    } catch (error) {
+        displayReading(null);
+        console.error("Error fetching reading:", error);
+        alert(error.message);
+    }
+} 

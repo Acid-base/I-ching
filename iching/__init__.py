@@ -1,5 +1,6 @@
-"""I Ching scraper package."""
+"""I Ching divination package."""
 
-from .scraper import IChingScraper
+from .core import Hexagram
+from .interpreter import ReadingInterpreter
 
-__all__ = ['IChingScraper'] 
+__all__ = ['Hexagram', 'ReadingInterpreter'] 

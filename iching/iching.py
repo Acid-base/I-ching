@@ -8,16 +8,30 @@ def get_hexagram_links(url: str) -> List[str]:
     response = requests.get(url)
     response.raise_for_status()
     soup = BeautifulSoup(response.content, 'html.parser')
-    return [a['href'] for a in soup.select('div.h3 a')
+    links = soup.select('div.h3 a')
+    return [str(a['href']) for a in links]
 
 def extract_reading_from_page(url: str) -> Dict[str, str | List[str]]:
     response = requests.get(url)
     response.raise_for_status()
     soup = BeautifulSoup(response.content, 'html.parser')
-    hexagram_number: int = int(soup.select_one('div.h3').text.split()[1])
-    hexagram_name: str = soup.select_one('div.h3').text.split('Hexagram ')[1.strip()
-    judgment: str = soup.select_one('div.judgment').text.strip()
-    line_readings: List[str] = [line.text.strip() for line in soup.select('div.line')]
+    
+    h3_elem = soup.select_one('div.h3')
+    if not h3_elem or not h3_elem.text:
+        raise ValueError("Could not find hexagram number")
+    
+    hexagram_number: int = int(h3_elem.text.split()[1])
+    hexagram_name: str = h3_elem.text.split('Hexagram ')[1].strip()
+    
+    judgment_elem = soup.select_one('div.judgment')
+    if not judgment_elem or not judgment_elem.text:
+        raise ValueError("Could not find judgment text")
+    judgment: str = judgment_elem.text.strip()
+    
+    line_readings: List[str] = [line.text.strip() for line in soup.select('div.line') if line.text]
+    if not line_readings:
+        raise ValueError("Could not find line readings")
+    
     return {
         "number": str(hexagram_number),
         "name": hexagram_name,
@@ -41,7 +55,7 @@ def get_changing_lines(hexagram: List[int]) -> tuple[List[int], List[int]]:
 def get_reading(hexagram_number: int, changing_lines: List[int]) -> Dict[str, str | List[str]]:
     try:
         with open('iching_readings.json', 'r', encoding='utf-8') as f:
-            all_readings = json.load(f)
+            all_readings: Dict[str, Dict[str, str | List[str]]] = json.load(f)
         reading = all_readings[str(hexagram_number)]
         if changing_lines:
             reading["changing_lines"] = [reading["line_readings"][i] for i in changing_lines]
@@ -63,7 +77,7 @@ if __name__ == "__main__":
         all_readings = {}
         for link in hexagram_links:
             try:
-            reading = extract_reading_from_page(base_url + link)
+                reading = extract_reading_from_page(base_url + link)
                 all_readings[reading["number"]] = reading
             except ValueError as e:
                 print(f"Error scraping {link}: {e}")

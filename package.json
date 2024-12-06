@@ -1,0 +1,20 @@
+{
+  "name": "iching-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json,py}\"",
+    "backend:dev": "cd packages/backend && poetry run uvicorn app.main:app --reload",
+    "backend:install": "cd packages/backend && poetry install"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^1.12.4"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "workspaces": [
+    "packages/*"
+  ]
+} 
