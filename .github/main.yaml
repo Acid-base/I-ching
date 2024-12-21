@@ -1,0 +1,94 @@
+name: I-Ching CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18] # Specify node versions
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm' # Add pnpm cache for node_modules
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install Node.js dependencies (pnpm)
+        run: pnpm install
+
+      - name: Install Python dependencies (poetry)
+        working-directory: ./packages/core
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install
+
+      - name: Format Code
+        run: pnpm format
+
+      - name: Lint code (ESLint)
+        run: pnpm lint
+
+      - name: Frontend Tests
+        uses: ./.github/workflows/node-test.yml
+        with:
+          working_directory: ./packages/frontend
+
+      - name: API Tests
+        uses: ./.github/workflows/node-test.yml
+        with:
+          working_directory: ./packages/api
+
+      - name: Run Python tests
+        working-directory: ./packages/core
+        run: |
+          poetry run pytest
+
+      - name: Build Frontend
+        working-directory: ./packages/frontend
+        run: pnpm build
+
+      - name: Build Backend
+        working-directory: ./packages/api
+        run: pnpm build
+
+      - name: Upload Frontend Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: packages/frontend/dist
+
+      - name: Upload Backend Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-build
+          path: packages/api/dist
+
+      - name: Deploy to Github pages
+        if: github.ref == 'refs/heads/main'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: packages/frontend/dist # Replace if your build output to a different folder
