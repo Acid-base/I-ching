@@ -1,3 +1,4 @@
+// packages/api/src/services/hexagramService.ts
 import { PythonShell } from 'python-shell';
 import path from 'path';
 import { z } from 'zod';
@@ -26,68 +27,23 @@ const TrigramDataSchema = z.object({
 
 const HexagramDataSchema = z.object({
   number: z.number(),
-  name: z.string(),
-  chinese: z.string(),
+  chineseName: z.string(),
+  englishName: z.string(),
   pinyin: z.string().optional(),
-  description: z.string(),
-  alternate_names: z.array(z.string()),
-  element: z.string(),
-  attribute: z.string(),
-  judgment: z.union([
-    z.string(),
-    TextWithExplanationSchema
-  ]),
-  image: z.union([
-    z.string(),
-    TextWithExplanationSchema
-  ]),
-  nuclear: z.object({
-    upper: z.number().nullable(),
-    lower: z.number().nullable()
-  }),
-  reversed: z.number().nullable(),
-  opposite: z.number(),
-  lines: z.array(LineDataSchema),
+  structure: z.array(z.string()),
   trigrams: z.object({
-    upper: TrigramDataSchema,
-    lower: TrigramDataSchema
-  })
-});
-
-const ReadingResponseSchema = z.object({
-  hexagram_number: z.number(),
-  changing_lines: z.array(z.number()),
-  lines: z.array(z.number()),
-  reading: HexagramDataSchema,
-  relating_hexagram: z.object({
-    number: z.number(),
-    name: z.string(),
-    chinese: z.string(),
-    pinyin: z.string().optional(),
-    description: z.string(),
-    alternate_names: z.array(z.string()).optional(),
-    element: z.string(),
-    attribute: z.string(),
-    judgment: z.union([
-      z.string(),
-      TextWithExplanationSchema
-    ]).optional(),
-    image: z.union([
-      z.string(),
-      TextWithExplanationSchema
-    ]).optional(),
-    nuclear: z.object({
-      upper: z.number().nullable(),
-      lower: z.number().nullable()
-    }).optional(),
-    reversed: z.number().nullable().optional(),
-    opposite: z.number().optional(),
-    lines: z.array(LineDataSchema).optional(),
-    trigrams: z.object({
-      upper: TrigramDataSchema,
-      lower: TrigramDataSchema
-    }).optional()
-  }).nullable()
+    upper: z.string(),
+    lower: z.string()
+  }),
+  relationships: z.object({
+    opposite: z.number(),
+    inverse: z.number(),
+    nuclear: z.array(z.number()),
+    mutual: z.array(z.unknown())
+  }),
+  judgment: z.string(),
+  image: z.string(),
+  lines: z.array(LineDataSchema)
 });
 
 const RelatingHexagramSchema = z.object({
@@ -120,6 +76,14 @@ const RelatingHexagramSchema = z.object({
   }).optional()
 }).strip();
 
+const ReadingResponseSchema = z.object({
+  hexagram_number: z.number(),
+  changing_lines: z.array(z.number()),
+  lines: z.array(z.number()),
+  reading: HexagramDataSchema,
+  relating_hexagram: RelatingHexagramSchema.nullable()
+});
+
 export type HexagramData = z.infer<typeof HexagramDataSchema>;
 export type ReadingResponse = z.infer<typeof ReadingResponseSchema>;
 
@@ -143,7 +107,7 @@ function validateHexagramData() {
   // Validate each hexagram's data structure
   readings.forEach(hexagram => {
     try {
-      HexagramDataSchema.parse(hexagram);
+      HexagramDataSchema.parse(hexagram); // Use HexagramDataSchema here
     } catch (error) {
       console.error(`Invalid data structure for hexagram ${hexagram.number}:`, error);
       throw new Error(`Invalid data structure for hexagram ${hexagram.number}`);
@@ -196,9 +160,14 @@ export async function generateReading(): Promise<ReadingResponse> {
     }
 
     // Validate the response
-    const parsed = ReadingResponseSchema.parse(result);
-    console.log('Successfully parsed result');
-    return parsed;
+    try {
+      const parsed = ReadingResponseSchema.parse(result);
+      console.log('Successfully parsed result');
+      return parsed;
+    } catch (error) {
+      console.error('Zod parsing error:', error);
+      throw new Error(`Zod parsing error: ${error}`);
+    }
   } catch (error) {
     console.error('Error generating reading:', error);
     throw error;
@@ -207,20 +176,26 @@ export async function generateReading(): Promise<ReadingResponse> {
 
 export async function getHexagramById(id: number): Promise<HexagramData> {
   try {
+    console.log(`Attempting to get hexagram with ID: ${id}`);
     // Validate id range
     if (id < 1 || id > 64) {
+      console.error(`Invalid hexagram ID: ${id}. Must be between 1 and 64.`);
       throw new Error(`Invalid hexagram ID: ${id}. Must be between 1 and 64.`);
     }
     
     // Find hexagram in validated data
     const hexagram = readings.find(h => h.number === id);
     if (!hexagram) {
+        console.error(`Hexagram ${id} not found`);
       throw new Error(`Hexagram ${id} not found`);
     }
     
-    return HexagramDataSchema.parse(hexagram);
+    console.log(`Found hexagram:`, hexagram);
+    const parsedHexagram = HexagramDataSchema.parse(hexagram); // Use HexagramDataSchema here
+    console.log(`Parsed hexagram:`, parsedHexagram);
+    return parsedHexagram;
   } catch (error) {
     console.error(`Error getting hexagram ${id}:`, error);
     throw error;
   }
-} 
+}

@@ -1,4 +1,4 @@
-import { OpenAPIV3 } from "npm:openapi-types@12.1.3"
+import { OpenAPIV3 } from "openapi-types"
 
 export const openApiSpec: OpenAPIV3.Document = {
   openapi: "3.0.0",
@@ -95,8 +95,6 @@ export const openApiSpec: OpenAPIV3.Document = {
   },
 }
 
-// Update the API server to serve the OpenAPI documentation
-import { serve } from "https://deno.land/std@0.211.0/http/server.ts"
-import { swaggerUI } from "npm:swagger-ui-express@5.0.0"
-
+// Update the API server to serve the OpenAPI documentation"
+import swaggerUI from "swagger-ui-express";
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(openApiSpec)) 

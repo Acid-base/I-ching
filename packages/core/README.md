@@ -22,8 +22,8 @@ from iching_core.divination import generate_hexagram
 
 # Generate a hexagram using the yarrow stalk method
 hexagram = generate_hexagram()
-print(f"Hexagram number: {hexagram.number}")
-print(f"Changing lines: {hexagram.changing_lines}")
+print(f"Hexagram number: {hexagram['number']}")
+print(f"Changing lines: {hexagram['changing_lines']}")
 ```
 
 ## Development
@@ -59,4 +59,4 @@ Contains the core divination logic:
 
 - `generate_hexagram()`: Generates a hexagram using the yarrow stalk method
 - `calculate_changing_lines()`: Determines which lines are changing
-- `get_related_hexagram()`: Finds the related hexagram based on changing lines 
+- `get_related_hexagram()`: Finds the related hexagram based on changing lines

@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ReadingResponse } from '../types';
+import { hexagramService } from '../services/hexagramService';
 
 interface UseHexagramResult {
   reading: ReadingResponse | null;
@@ -21,18 +22,16 @@ export function useHexagram(): UseHexagramResult {
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [isInterpreting, setIsInterpreting] = useState(false);
   const queryClient = useQueryClient();
+  const [mode, setMode] = useState<'yarrow' | 'coin'>('yarrow');
 
   // Memoize the query configuration
   const queryConfig = useMemo(() => ({
-    queryKey: ['reading'],
-    queryFn: async () => {
-      const response = await axios.get<ReadingResponse>(`${API_URL}/reading`);
-      return response.data;
-    },
+    queryKey: ['reading', mode],
+    queryFn: () => hexagramService.generateReading(mode),
     enabled: false,
     cacheTime: CACHE_TIME,
     staleTime: CACHE_TIME,
-  }), []);
+  }), [mode]);
 
   const { 
     data: reading,
@@ -79,5 +78,6 @@ export function useHexagram(): UseHexagramResult {
     isInterpreting,
     getInterpretation,
     clearReading,
+    setMode,
   };
-} 
+}

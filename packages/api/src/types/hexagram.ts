@@ -1,43 +1,25 @@
-export interface HexagramLine {
-  number: number
-  value: number
-  meaning: string
-  transforms_to?: number | null
-}
+// packages/api/src/types/hexagram.ts
+import { z } from 'zod'
 
-export interface Trigram {
-  name: string
-  attribute: string
-  chinese: string
-  element: string
-  image: string
-}
+export const HexagramSchema = z.object({
+  number: z.number(),
+  chineseName: z.string(),
+  englishName: z.string(),
+  pinyin: z.string(),
+  structure: z.array(z.string()),
+  trigrams: z.object({
+    upper: z.string(),
+    lower: z.string(),
+  }),
+  relationships: z.object({
+    opposite: z.number(),
+    inverse: z.number(),
+    nuclear: z.array(z.number()),
+    mutual: z.array(z.any()),
+  }),
+  judgment: z.string(),
+  image: z.string(),
+  lines: z.array(z.string()),
+})
 
-export interface TextWithExplanation {
-  text: string
-  explanation: string
-}
-
-export interface HexagramData {
-  number: number
-  name: string
-  chinese: string
-  pinyin?: string
-  description: string
-  alternate_names: string[]
-  element: string
-  attribute: string
-  judgment: TextWithExplanation | string
-  image: TextWithExplanation | string
-  nuclear: {
-    upper: number | null
-    lower: number | null
-  }
-  reversed: number | null
-  opposite: number
-  lines: HexagramLine[]
-  trigrams: {
-    upper: Trigram
-    lower: Trigram
-  }
-} 
+export type Hexagram = z.infer<typeof HexagramSchema>
