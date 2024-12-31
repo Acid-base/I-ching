@@ -1,380 +1,90 @@
-import json
 import random
 import sys
-from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ValidationError
-from loguru import logger
+class IChingLineGenerator:
+    @staticmethod
+    def get_yarrow_stalk_line() -> str:
+        def manipulate_stalks(num_stalks: int) -> int:
+            """
+            Divides the stalks into two piles, removes one from the second pile,
+            and returns the combined remainder of both piles when divided by 4.
+            """
+            if num_stalks == 0:
+                raise ValueError("Cannot manipulate 0 stalks")
 
+            # Split the stalks into two random piles
+            split_point = random.randint(1, num_stalks - 1)
+            pile1_size = split_point
+            pile2_size = num_stalks - split_point
 
-class Trigram(BaseModel):
-    name: str
-    meaning: str
-    image: str
-    family: str
-    attribute: str
+            # Remove one stalk from the second pile
+            pile2_size -= 1
 
+            # Calculate remainders when dividing by 4, replacing 0 with 4
+            rem1 = pile1_size % 4
+            rem1 = 4 if rem1 == 0 else rem1
+            rem2 = pile2_size % 4
+            rem2 = 4 if rem2 == 0 else rem2
 
-class Trigrams(BaseModel):
-    upper: Trigram
-    lower: Trigram
+            # Assertions to validate the results
+            assert 1 <= rem1 <= 4
+            assert 1 <= rem2 <= 4
+            set_aside = rem1 + rem2 + 1
+            assert 5 <= set_aside <= 9  # Set aside should be between 5 and 9
 
+            return set_aside
 
-class HexagramData(BaseModel):
-    number: int
-    chineseName: str
-    englishName: str
-    pinyin: str
-    structure: List[str]
-    judgment: str
-    image: str
-    lines: List[str]
+        # Initial number of stalks
+        num_stalks = 49
+        total_set_aside = 0
 
+        # Perform three phases of stalk manipulation
+        for i in range(3):
+            set_aside = manipulate_stalks(num_stalks)
+            total_set_aside += set_aside
+            num_stalks -= set_aside  # Update the number of stalks for the next phase
+            print(f"Phase {i+1}: Set aside = {set_aside}, Total set aside = {total_set_aside}")
 
-class ReadingResponse(BaseModel):
-    hexagram_number: int
-    changing_lines: List[int]
-    lines: List[str]
-    reading: HexagramData
-    trigrams: Trigrams
-    relating_hexagram: Optional[HexagramData] = None
-    opposite_hexagram: Optional[HexagramData] = None
-    inverse_hexagram: Optional[HexagramData] = None
-    nuclear_hexagrams: Optional[List[HexagramData]] = None
-    mutual_hexagrams: Optional[List[HexagramData]] = None
+        # Determine the I Ching line value based on the total set aside
+        if total_set_aside == 9:
+            return "9"
+        elif total_set_aside == 13:
+            return "8"
+        elif total_set_aside == 17:
+            return "7"
+        elif total_set_aside == 21:
+            return "6"
+        else:
+            raise ValueError(
+                f"Unexpected number of stalks set aside: {total_set_aside}"
+            )
 
+    @staticmethod
+    def get_three_coins_line() -> str:
+        coin1 = random.choice(["H", "T"])
+        coin2 = random.choice(["H", "T"])
+        coin3 = random.choice(["H", "T"])
 
-class DiviningOptions(BaseModel):
-    mode: Literal["yarrow", "coin"] = "yarrow"
+        heads = sum(1 for coin in [coin1, coin2, coin3] if coin == "H")
 
+        if heads == 0:
+            return "8"
+        elif heads == 1:
+            return "7"
+        elif heads == 2:
+            return "9"
+        elif heads == 3:
+            return "6"
 
-TRIGRAMS: Dict[str, Dict] = {
-    "heaven": {
-        "name": "Heaven",
-        "meaning": "Creative",
-        "image": "Sky",
-        "family": "Father",
-        "attribute": "Strong",
-    },
-    "lake": {
-        "name": "Lake",
-        "meaning": "Joyful",
-        "image": "Marsh",
-        "family": "Youngest Daughter",
-        "attribute": "Pleasing",
-    },
-    "fire": {
-        "name": "Fire",
-        "meaning": "Clinging",
-        "image": "Flame",
-        "family": "Middle Daughter",
-        "attribute": "Radiant",
-    },
-    "thunder": {
-        "name": "Thunder",
-        "meaning": "Arousing",
-        "image": "Thunder",
-        "family": "Eldest Son",
-        "attribute": "Moving",
-    },
-    "wind": {
-        "name": "Wind",
-        "meaning": "Gentle",
-        "image": "Wind",
-        "family": "Eldest Daughter",
-        "attribute": "Penetrating",
-    },
-    "water": {
-        "name": "Water",
-        "meaning": "Abysmal",
-        "image": "Water",
-        "family": "Middle Son",
-        "attribute": "Dangerous",
-    },
-    "mountain": {
-        "name": "Mountain",
-        "meaning": "Stillness",
-        "image": "Mountain",
-        "family": "Youngest Son",
-        "attribute": "Resting",
-    },
-    "earth": {
-        "name": "Earth",
-        "meaning": "Receptive",
-        "image": "Earth",
-        "family": "Mother",
-        "attribute": "Yielding",
-    },
-}
-
-BINARY_TO_TRIGRAM = {
-    "111": "heaven",
-    "011": "lake",
-    "101": "fire",
-    "001": "thunder",
-    "110": "wind",
-    "010": "water",
-    "100": "mountain",
-    "000": "earth",
-}
-
-
-def load_readings() -> Dict[str, HexagramData]:
-    """Load I Ching readings from JSON file."""
-    readings_file = Path(__file__).parent / "data" / "readings.json"
-    try:
-        with readings_file.open("r", encoding="utf-8") as f:
-            data = json.load(f)
-            return {str(h["number"]): HexagramData(**h) for h in data}
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON parsing error in readings.json: {str(e)}")
-        raise ValueError(f"Invalid JSON format in readings.json: {str(e)}")
-    except Exception as e:
-        logger.error(f"Error loading readings: {str(e)}")
-        raise
-
-
-def generate_line(mode: str = "yarrow") -> str:
-    """Generate a single line using either yarrow stalk or coin method.
-    Returns a string representation ('6','7','8','9') of the line value."""
-    logger.info(f"Generating line using {mode} method")
-    if mode == "coin":
-        coins = [random.choice([2, 3]) for _ in range(3)]
-        total = sum(coins)
-        return str(total)  # Convert to string
-    return str(random.choices([6,7,8,9], weights=[2,3,2,3])[0])  # Convert to string
-
-
-def get_trigram_for_lines(lines: List[str]) -> str:
-    binary = "".join("1" if line in ("7", "9") else "0" for line in lines)
-    return BINARY_TO_TRIGRAM.get(binary, "heaven")
-
-
-def get_trigrams_for_hexagram(lines: List[str]) -> Trigrams:
-    logger.info(f"Getting trigrams for lines: {lines}")
-
-    lower_lines = lines[:3]
-    upper_lines = lines[3:]
-
-    lower_key = get_trigram_for_lines(lower_lines)
-    upper_key = get_trigram_for_lines(upper_lines)
-
-    logger.info(f"Upper trigram: {upper_key}, Lower trigram: {lower_key}")
-
-    return Trigrams(
-        upper=Trigram(**TRIGRAMS[upper_key]), lower=Trigram(**TRIGRAMS[lower_key])
-    )
-
-
-def calculate_hexagram_number(lines: List[str]) -> int:
-    """Calculate hexagram number from string line values."""
-    binary = [1 if line in ("7", "9") else 0 for line in lines]
-    decimal = int("".join(map(str, binary)), 2)
-    logger.info(f"Binary: {binary}, Decimal: {decimal}")
-
-    king_wen_map = {
-        0: 2,
-        1: 24,
-        2: 7,
-        3: 19,
-        4: 15,
-        5: 36,
-        6: 46,
-        7: 11,
-        8: 16,
-        9: 27,
-        10: 23,
-        11: 8,
-        12: 3,
-        13: 42,
-        14: 20,
-        15: 35,
-        16: 4,
-        17: 29,
-        18: 39,
-        19: 63,
-        20: 51,
-        21: 40,
-        22: 21,
-        23: 30,
-        24: 25,
-        25: 17,
-        26: 2,
-        27: 45,
-        28: 37,
-        29: 13,
-        30: 31,
-        31: 50,
-        32: 9,
-        33: 57,
-        34: 5,
-        35: 26,
-        36: 62,
-        37: 53,
-        38: 38,
-        39: 52,
-        40: 14,
-        41: 34,
-        42: 43,
-        43: 1,
-        44: 44,
-        45: 28,
-        46: 48,
-        47: 58,
-        48: 59,
-        49: 41,
-        50: 60,
-        51: 56,
-        52: 47,
-        53: 64,
-        54: 49,
-        55: 18,
-        56: 12,
-        57: 25,
-        58: 6,
-        59: 10,
-        60: 33,
-        61: 13,
-        62: 44,
-        63: 1,
-    }
-    result = king_wen_map.get(decimal, 1)
-    logger.info(f"Mapped to King Wen number: {result}")
-    return result
-
-
-def calculate_opposite_hexagram(structure: List[str, readings: Dict[str, HexagramData) -> Optional[HexagramData]:
-    """Calculate the opposite hexagram based on the structure."""
-    inverted_structure = ["1" if line == "0" else "0" for line in structure]
-    hexagram_number = calculate_hexagram_number(inverted_structure)
-    return readings.get(str(hexagram_number))
-
-
-def calculate_inverse_hexagram(structure: List[str], readings: Dict[str, HexagramData]) -> Optional[HexagramData]:
-    """Calculate the inverse hexagram based on the structure."""
-    reversed_structure = structure[::-1]
-    hexagram_number = calculate_hexagram_number(reversed_structure)
-    return readings.get(str(hexagram_number))
-
-
-def calculate_nuclear_hexagrams(structure: List[str], readings: Dict[str, HexagramData]) -> List[HexagramData]:
-    """Calculate the nuclear hexagrams based on the structure."""
-    lower_nuclear = structure[1:4]
-    upper_nuclear = structure[2:5]
-    lower_number = calculate_hexagram_number(lower_nuclear)
-    upper_number = calculate_hexagram_number(upper_nuclear)
-    return [readings.get(str(lower_number)), readings.get(str(upper_number))]
-
-
-def calculate_mutual_hexagrams(structure: List[str], readings: Dict[str, HexagramData]) -> List[HexagramData]:
-    """Calculate the mutual hexagrams based on the structure."""
-    first_three = structure[0:3]
-    last_three = structure[3:6]
-    first_number = calculate_hexagram_number(first_three)
-    last_number = calculate_hexagram_number(last_three)
-    return [readings.get(str(first_number)), readings.get(str(last_number))]
-
-
-def generate_reading(options: Optional[DiviningOptions] = None) -> ReadingResponse:
-    try:
-        logger.info("Starting reading generation")
-        if options is None:
-            options = DiviningOptions()
-        logger.info(f"Using options: {options}")
-
-        # Generate six lines as strings
-        lines = [generate_line(options.mode) for _ in range(6)]
-        logger.info(f"Generated lines: {lines}")
-
-        # Calculate hexagram number from string lines
-        hexagram_number = calculate_hexagram_number(lines)
-        logger.info(f"Calculated hexagram number: {hexagram_number}")
-
-        # Find changing lines (6 or 9)
-        changing_lines = [i + 1 for i, line in enumerate(lines) if line in ("6", "9")]
-        logger.info(f"Changing lines: {changing_lines}")
-
-        readings = load_readings()
-        reading = readings.get(str(hexagram_number))
-        if not reading:
-            raise ValueError(f"Hexagram {hexagram_number} not found in readings data")
-        logger.info(f"Found primary hexagram: {reading.englishName}")
-
-        trigrams = get_trigrams_for_hexagram(lines)
-
-        relating_hexagram = None
-        if changing_lines:
-            transformed_lines = [
-                "8" if line == "9" else ("7" if line == "6" else line) for line in lines
-            ]
-            relating_number = calculate_hexagram_number(transformed_lines)
-            logger.info(f"Calculated relating hexagram number: {relating_number}")
-            relating_hexagram = readings.get(str(relating_number))
-            if relating_hexagram:
-                logger.info(f"Found relating hexagram: {relating_hexagram.englishName}")
-
-        opposite_hexagram = calculate_opposite_hexagram(reading.structure, readings)
-        inverse_hexagram = calculate_inverse_hexagram(reading.structure, readings)
-        nuclear_hexagrams = calculate_nuclear_hexagrams(reading.structure, readings)
-        mutual_hexagrams = calculate_mutual_hexagrams(reading.structure, readings)
-
-        response = ReadingResponse(
-            hexagram_number=hexagram_number,
-            changing_lines=changing_lines,
-            lines=lines,
-            reading=reading,
-            trigrams=trigrams,
-            relating_hexagram=relating_hexagram,
-            opposite_hexagram=opposite_hexagram,
-            inverse_hexagram=inverse_hexagram,
-            nuclear_hexagrams=nuclear_hexagrams,
-            mutual_hexagrams=mutual_hexagrams,
+    @staticmethod
+    def get_random_line() -> str:
+        return str(
+            random.choice(
+                [
+                    IChingLineGenerator.get_yarrow_stalk_line(),
+                    IChingLineGenerator.get_three_coins_line(),
+                ]
+            )
         )
 
-        # Use model_dump() instead of dict()
-        print(json.dumps(response.model_dump()))
-        logger.info("Successfully generated reading")
-        return response
-
-    except Exception as e:
-        logger.error(f"Error generating reading: {str(e)}", exc_info=True)
-        error_response = {"error": str(e), "ai_generated": True}
-        print(json.dumps(error_response), file=sys.stderr)
-        sys.exit(1)
-
-
-def get_hexagram_by_id(id_: int) -> HexagramData:
-    readings = load_readings()
-    if str(id_) not in readings:
-        raise ValueError(f"Invalid hexagram ID: {id_}")
-    return readings[str(id_)]
-
-
-def main() -> None:
-    try:
-        logger.info("Starting divination.py")
-        if len(sys.argv) > 1:
-            try:
-                logger.info(f"Received arguments: {sys.argv[1]}")
-                options_dict = json.loads(sys.argv[1])
-                options = DiviningOptions(**options_dict)
-                generate_reading(options)
-            except (json.JSONDecodeError, ValidationError) as e:
-                logger.error(f"JSON decode error: {str(e)}")
-                print(
-                    json.dumps({"error": "Invalid JSON options provided"}),
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-        else:
-            logger.info("No arguments provided, using defaults")
-            generate_reading()
-
-    except Exception as e:
-        print(json.dumps({"error": str(e)}), file=sys.stderr)
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+print(IChingLineGenerator.get_yarrow_stalk_line())
