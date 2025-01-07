@@ -20,7 +20,7 @@ env/
 venv/
 .env/
 .venv/
-
+.aider.*
 # Coverage
 coverage/
 .nyc_output/
@@ -29,3 +29,6 @@ coverage/
 *.log
 npm-debug.log*
 node_modules
+
+.aider*
+api_key.txt

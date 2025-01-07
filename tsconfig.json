@@ -14,6 +14,9 @@
     "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "noEmit": true,
+    "noEmitOnError": true,
+    "noImplicitAny": true,
     
     // Module Resolution
     "allowImportingTsExtensions": true,
@@ -38,7 +41,6 @@
   "include": ["src", "packages/*/src"],
   "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
   "references": [
-    { "path": "./packages/api" },
-    { "path": "./packages/web" }
+
   ]
 } 

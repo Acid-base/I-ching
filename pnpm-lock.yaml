@@ -114,6 +114,12 @@ importers:
       '@emotion/styled':
         specifier: ^11.11.0
         version: 11.14.0(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(react@18.3.1)
+      '@react-buddy/ide-toolbox':
+        specifier: ^2.4.0
+        version: 2.4.0(react@18.3.1)
+      '@react-buddy/palette-chakra-ui':
+        specifier: ^2.3.1
+        version: 2.3.2(@chakra-ui/icons@2.2.4(@chakra-ui/react@2.10.4(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(framer-motion@11.14.1(@emotion/is-prop-valid@1.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1))(@chakra-ui/react@2.10.4(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(framer-motion@11.14.1(@emotion/is-prop-valid@1.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       '@tanstack/react-query':
         specifier: ^5.24.1
         version: 5.62.7(react@18.3.1)
@@ -806,6 +812,18 @@ packages:
 
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
+
+  '@react-buddy/ide-toolbox@2.4.0':
+    resolution: {integrity: sha512-TWHX6gwa0Gop7215uHhjFMbYLLdjM/b9rr0wYE3E0m7GNJ56gbPpbZiq86w9uI8zksl827acqGeT437MkuO64w==}
+    peerDependencies:
+      react: ^17.0.0 || ^18.0.0
+
+  '@react-buddy/palette-chakra-ui@2.3.2':
+    resolution: {integrity: sha512-jKAmJxZHfGL814hcJmtBFfLu06NAnlH1s1l7U08otUShilIBqv4CI1mFNa3V/RA6iNRLZOqrxKCNggyNrvf1Ng==}
+    peerDependencies:
+      '@chakra-ui/icons': ^1.1.7
+      '@chakra-ui/react': ^2.2.1
+      react: ^17.0.0 || ^18.0.0
 
   '@rollup/rollup-android-arm-eabi@4.28.1':
     resolution: {integrity: sha512-2aZp8AES04KI2dy3Ss6/MDjXbwBzj+i0GqKtWXgw2/Ma6E4jJvujryO6gJAghIRVz7Vwr9Gtl/8na3nDUKpraQ==}
@@ -4644,6 +4662,17 @@ snapshots:
   '@open-draft/until@2.1.0': {}
 
   '@popperjs/core@2.11.8': {}
+
+  '@react-buddy/ide-toolbox@2.4.0(react@18.3.1)':
+    dependencies:
+      react: 18.3.1
+
+  '@react-buddy/palette-chakra-ui@2.3.2(@chakra-ui/icons@2.2.4(@chakra-ui/react@2.10.4(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(framer-motion@11.14.1(@emotion/is-prop-valid@1.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1))(@chakra-ui/react@2.10.4(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(framer-motion@11.14.1(@emotion/is-prop-valid@1.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@chakra-ui/icons': 2.2.4(@chakra-ui/react@2.10.4(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(framer-motion@11.14.1(@emotion/is-prop-valid@1.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
+      '@chakra-ui/react': 2.10.4(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(react@18.3.1))(@types/react@18.3.16)(framer-motion@11.14.1(@emotion/is-prop-valid@1.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@react-buddy/ide-toolbox': 2.4.0(react@18.3.1)
+      react: 18.3.1
 
   '@rollup/rollup-android-arm-eabi@4.28.1':
     optional: true
