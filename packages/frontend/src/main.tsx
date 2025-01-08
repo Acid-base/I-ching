@@ -2,8 +2,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import { AppProvider } from './providers/AppProvider'
-import { DevSupport } from '@react-buddy/ide-toolbox'
-import { ComponentPreviews, useInitial } from '@/dev'
 
 const rootElement = document.getElementById('root')
 if (!rootElement) throw new Error('Failed to find the root element')
@@ -13,11 +11,7 @@ const root = createRoot(rootElement)
 root.render(
   <StrictMode>
     <AppProvider>
-      <DevSupport ComponentPreviews={ComponentPreviews}
-                  useInitialHook={useInitial}
-      >
-        <App />
-      </DevSupport>
+      <App />
     </AppProvider>
-  </StrictMode>,
+  </StrictMode>
 )

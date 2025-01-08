@@ -1,35 +1,88 @@
-import { HexagramReading } from '../types'
+import axios from 'axios'
+import type { ReadingResponse, ChatResponse } from '../types'
 
-const API_URL = Deno.env.get('API_URL') || 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-export async function getReading(data: {
-  hexagram_number: number
-  changing_lines: number[]
-  lines: number[]
-}): Promise<HexagramReading> {
-  const response = await fetch(`${API_URL}/api/reading`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  })
-  
-  if (!response.ok) {
-    throw new Error('Failed to get reading')
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
+// Consolidate all API functions
+export const apiService = {
+  generateReading: async (mode: 'yarrow' | 'coin'): Promise<ReadingResponse> => {
+    const { data } = await api.post('/hexagrams/generate', { mode })
+    return data
+  },
+
+  getHexagram: async (id: number) => {
+    const { data } = await api.get(`/hexagrams/${id}`)
+    return data
+  },
+
+  interpretHexagram: async (hexagramNumber: number) => {
+    const { data } = await api.post('/interpretations/hexagram', {
+      hexagram_number: hexagramNumber
+    })
+    return data
+  },
+
+  getEnhancedInterpretation: async (hexagramNumber: number) => {
+    const { data } = await api.post('/interpretations/comprehensive', {
+      hexagram_number: hexagramNumber
+    })
+    return data
+  },
+
+  startChat: async () => {
+    const { data } = await api.post<ChatResponse>('/chat/start')
+    return data
+  },
+
+  sendChatMessage: async (content: string) => {
+    const { data } = await api.post<ChatResponse>('/chat/message', {
+      role: 'user',
+      content
+    })
+    return data
   }
-  
-  return response.json()
 }
 
-export async function getAiInterpretation(reading: HexagramReading): Promise<string> {
-  const response = await fetch(`${API_URL}/api/ai-interpretation`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reading })
-  })
-  
-  if (!response.ok) {
-    throw new Error('Failed to get AI interpretation')
+// Named exports for backward compatibility
+export const {
+  generateReading,
+  getHexagram,
+  interpretHexagram,
+  getEnhancedInterpretation,
+  startChat,
+  sendChatMessage
+} = apiService
+
+export interface ReadingResponse {
+  success: boolean
+  data: {
+    hexagram_number: number
+    changing_lines: number[]
+    lines: number[]
+    reading: {
+      number: number
+      name: string
+      englishName: string
+      chinese: string
+      description: string
+      judgment: { text: string }
+      image: { text: string }
+      lines: string[]
+    }
+    interpretation: string
   }
-  
-  return response.json()
-} 
+}
+
+export interface ChatResponse {
+  success: boolean
+  data: {
+    message: string
+  }
+}

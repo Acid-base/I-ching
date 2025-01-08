@@ -1,9 +1,0 @@
-{
-  "system_prompt": "You are a master I Ching scholar and diviner with deep understanding of the ancient wisdom...",
-  "enhanced_prompt": "You are a master I Ching scholar and interpreter. Analyze this hexagram deeply...",
-  "chat_prompt": "You are an expert I Ching consultant ready to help with questions and interpretations...",
-  "interpret_reading": "Please interpret this I Ching reading:\nHexagram {hexagram_number}: {hexagram_name} ({hexagram_chinese})\n{hexagram_description}\n\nJudgment: {hexagram_judgment}\nImage: {hexagram_image}\n\n{changing_lines_text}\n\n{relating_hexagram_text}",
-  "enhanced_interpretation": "Please provide a detailed interpretation of:\nHexagram {hexagram_number}: {hexagram_name} ({hexagram_chinese})\nElement: {hexagram_element}\nAttribute: {hexagram_attribute}\n\nUpper Trigram: {upper_trigram}\nLower Trigram: {lower_trigram}\n\nJudgment: {hexagram_judgment}\nImage: {hexagram_image}",
-  "interpret_line": "Please analyze this line:\n{line}\n\nConsider its position, meaning, and practical implications.",
-  "relationship_interpretation": "Analyze the relationship between:\nPrimary Hexagram: {primary_hexagram_name} ({primary_hexagram_chinese})\nRelated Hexagram: {related_hexagram_name} ({related_hexagram_chinese})"
-}

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ReadingResponse } from '../types';
 import { hexagramService } from '../services/hexagramService';
+import { generateReading, ReadingResponse } from '@services/api';
 
 interface UseHexagramResult {
   reading: ReadingResponse | null;
@@ -23,6 +24,9 @@ export function useHexagram(): UseHexagramResult {
   const [isInterpreting, setIsInterpreting] = useState(false);
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<'yarrow' | 'coin'>('yarrow');
+  const [reading, setReading] = useState<ReadingResponse['data'] | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<Error | null>(null);
 
   // Memoize the query configuration
   const queryConfig = useMemo(() => ({
@@ -33,12 +37,18 @@ export function useHexagram(): UseHexagramResult {
     staleTime: CACHE_TIME,
   }), [mode]);
 
-  const { 
-    data: reading,
-    isLoading: isGenerating,
-    error: generateError,
-    refetch: generate
-  } = useQuery(queryConfig);
+  const generate = async () => {
+    setIsGenerating(true);
+    setGenerateError(null);
+    try {
+      const response = await generateReading('yarrow');
+      setReading(response.data);
+    } catch (error) {
+      setGenerateError(error instanceof Error ? error : new Error('Failed to generate reading'));
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   // Memoize interpretation function
   const getInterpretation = useCallback(async () => {
@@ -48,7 +58,7 @@ export function useHexagram(): UseHexagramResult {
       setIsInterpreting(true);
       const cacheKey = ['interpretation', reading.hexagram_number];
       const cachedInterpretation = queryClient.getQueryData<string>(cacheKey);
-      
+
       if (cachedInterpretation) {
         setInterpretation(cachedInterpretation);
         return;

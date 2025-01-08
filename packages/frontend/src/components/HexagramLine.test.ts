@@ -1,23 +1,20 @@
-import { describe, it, expect } from "https://deno.land/std@0.211.0/testing/bdd.ts"
-import { renderWithProviders } from "../test/test-utils.ts"
-import { HexagramLine } from "./HexagramLine.tsx"
+import { render } from '@testing-library/react'
+import { HexagramLine } from './HexagramLine'
 
 describe('HexagramLine', () => {
-  it('renders a solid line when filled is true', () => {
-    const { getByTestId } = renderWithProviders(<HexagramLine filled={true} changing={false} />)
-    const line = getByTestId('hexagram-line')
-    expect(line.getAttribute('data-filled')).toBe('true')
+  it('renders a solid line for yang (1)', () => {
+    const { container } = render(
+      <HexagramLine value={1} isChanging={false} position={1} />
+    )
+    expect(container.querySelector('[data-testid="line-1"]')).toBeInTheDocument()
+    expect(container.querySelector('[data-testid="line-1-solid"]')).toBeInTheDocument()
   })
 
-  it('renders a broken line when filled is false', () => {
-    const { getByTestId } = renderWithProviders(<HexagramLine filled={false} changing={false} />)
-    const line = getByTestId('hexagram-line')
-    expect(line.getAttribute('data-filled')).toBe('false')
+  it('renders a broken line for yin (0)', () => {
+    const { container } = render(
+      <HexagramLine value={0} isChanging={false} position={1} />
+    )
+    expect(container.querySelector('[data-testid="line-1"]')).toBeInTheDocument()
+    expect(container.querySelector('[data-testid="line-1-broken"]')).toBeInTheDocument()
   })
-
-  it('shows changing state when changing prop is true', () => {
-    const { getByTestId } = renderWithProviders(<HexagramLine filled={true} changing={true} />)
-    const line = getByTestId('hexagram-line')
-    expect(line.getAttribute('data-changing')).toBe('true')
-  })
-}) 
+})

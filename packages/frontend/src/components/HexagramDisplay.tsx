@@ -1,72 +1,68 @@
-import React, { useMemo } from 'react';
-import {
-  Box,
-  VStack,
-  Text,
-  useColorModeValue,
-  HStack,
-  Tooltip,
-  Grid,
-} from '@chakra-ui/react';
-import type { ReadingResponse } from '../types';
-
-// Memoize simple components
-const Line = React.memo(({ filled, changing }: { filled: boolean; changing?: boolean }) => (
-  <HStack spacing={2} mb={1} opacity={changing ? 0.6 : 1}>
-    <Box flex={1} h="2px" bg="currentColor" />
-    {!filled && <Box w="10px" />}
-    <Box flex={1} h="2px" bg="currentColor" />
-  </HStack>
-));
-
-const HexagramLines = React.memo(({ lines, changingLines }: { lines: number[]; changingLines: number[] }) => (
-  <Box w="100px" mb={4}>
-    {lines.map((line, index) => (
-      <Line 
-        key={index} 
-        filled={line % 2 === 1} 
-        changing={changingLines.includes(index + 1)}
-      />
-    ))}
-  </Box>
-));
+import React from 'react'
+import { Box, VStack, Text, Heading, useColorModeValue, Divider } from '@chakra-ui/react'
+import type { ReadingResponse } from '@/types'
+import { HexagramLine } from '@components/HexagramLine'
 
 interface HexagramDisplayProps {
-  reading?: ReadingResponse | null;
-  isLoading?: boolean;
+  reading: ReadingResponse['data']
+  isLoading?: boolean
 }
 
-export const HexagramDisplay = ({ reading, isLoading }: HexagramDisplayProps) => {
-  const lines = useMemo(() => {
-    if (!reading) return [];
-    return reading.reading.structure.map((line: string) => parseInt(line, 10));
-  }, [reading]);
+export function HexagramDisplay({ reading, isLoading }: HexagramDisplayProps) {
+  const bgColor = useColorModeValue('white', 'gray.800')
+  const borderColor = useColorModeValue('gray.200', 'gray.700')
 
-  if (isLoading) return <Box>Loading...</Box>
-  if (!reading) return null
+  if (isLoading) {
+    return <Box>Loading...</Box>
+  }
 
-  const { reading: hexagram, changing_lines } = reading;
-  
   return (
-    <VStack spacing={4}>
-      <Text fontSize="2xl">
-        {hexagram.englishName} ({hexagram.chineseName})
-      </Text>
-      <HexagramLines lines={lines} changingLines={changing_lines} />
-      
-      <Grid templateColumns="1fr" gap={2}>
-        {hexagram.structure.map((line: string, i: number) => (
-          <Box 
-            key={i}
-            bg={changing_lines.includes(i + 1) ? "yellow.200" : "gray.200"}
-            h="8px"
-            w="full"
-          />
-        ))}
-      </Grid>
+    <Box
+      p={6}
+      borderRadius="xl"
+      borderWidth="1px"
+      bg={bgColor}
+      borderColor={borderColor}
+      shadow="md"
+      w="full"
+      maxW="container.md"
+    >
+      <VStack spacing={6} align="stretch">
+        <VStack spacing={2} align="center">
+          <Heading size="lg">
+            Hexagram {reading.hexagram_number}: {reading.reading.name}
+          </Heading>
+          <Text fontSize="xl" color="gray.500">
+            {reading.reading.chinese}
+          </Text>
+        </VStack>
 
-      <Text>{hexagram.judgment}</Text>
-      <Text>{hexagram.image}</Text>
-    </VStack>
+        <Divider />
+
+        <Box py={4}>
+          <VStack spacing={2} align="center" w="200px" mx="auto">
+            {reading.lines.map((line, index) => (
+              <HexagramLine
+                key={index}
+                value={line}
+                isChanging={reading.changing_lines.includes(index + 1)}
+                position={index + 1}
+              />
+            ))}
+          </VStack>
+        </Box>
+
+        <VStack spacing={4} align="stretch">
+          <Box>
+            <Text fontWeight="bold">Judgment</Text>
+            <Text>{reading.reading.judgment.text}</Text>
+          </Box>
+          <Box>
+            <Text fontWeight="bold">Image</Text>
+            <Text>{reading.reading.image.text}</Text>
+          </Box>
+        </VStack>
+      </VStack>
+    </Box>
   )
 }

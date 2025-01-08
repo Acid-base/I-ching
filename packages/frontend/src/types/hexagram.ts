@@ -31,3 +31,32 @@ export interface ReadingResponse {
   reading: HexagramData;
   relating_hexagram: HexagramData | null;
 }
+
+export interface Hexagram {
+  number: number;
+  name: string;
+  chinese: string;
+  description: string;
+  judgment: {
+    text: string;
+    explanation?: string;
+  };
+  image: {
+    text: string;
+    explanation?: string;
+  };
+  lines: string[];
+  trigrams: {
+    upper: string;
+    lower: string;
+  };
+}
+
+export interface HexagramLine {
+  position: number;
+  value: number;
+  isChanging: boolean;
+  text?: string;
+}
+
+export type HexagramMode = 'yarrow' | 'coin' | 'random';

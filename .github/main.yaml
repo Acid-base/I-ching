@@ -1,94 +1,71 @@
-name: I-Ching CI/CD
+name: CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18] # Specify node versions
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'pnpm' # Add pnpm cache for node_modules
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.11'
 
-      - name: Install pnpm
-        run: npm install -g pnpm
+      - name: Install Poetry
+        run: pip install poetry
 
-      - name: Install Node.js dependencies (pnpm)
-        run: pnpm install
+      - name: Configure Poetry
+        run: poetry config virtualenvs.in-project true
 
-      - name: Install Python dependencies (poetry)
-        working-directory: ./packages/core
-        run: |
-          poetry config virtualenvs.in-project true
-          poetry install
+      - name: Install dependencies
+        run: poetry install --no-interaction --with dev
 
-      - name: Format Code
-        run: pnpm format
+      - name: Run Ruff
+        run: poetry run ruff check .
 
-      - name: Lint code (ESLint)
-        run: pnpm lint
+      - name: Run Ruff Format
+        run: poetry run ruff format .
 
-      - name: Frontend Tests
-        uses: ./.github/workflows/node-test.yml
-        with:
-          working_directory: ./packages/frontend
+      - name: Run Tests
+        run: poetry run pytest --junitxml=test-results.xml
 
-      - name: API Tests
-        uses: ./.github/workflows/node-test.yml
-        with:
-          working_directory: ./packages/api
-
-      - name: Run Python tests
-        working-directory: ./packages/core
-        run: |
-          poetry run pytest
-
-      - name: Build Frontend
-        working-directory: ./packages/frontend
-        run: pnpm build
-
-      - name: Build Backend
-        working-directory: ./packages/api
-        run: pnpm build
-
-      - name: Upload Frontend Artifact
+      - name: Upload test results
         uses: actions/upload-artifact@v3
+        if: always()
         with:
-          name: frontend-build
-          path: packages/frontend/dist
+          name: test-results
+          path: test-results.xml
 
-      - name: Upload Backend Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: backend-build
-          path: packages/api/dist
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Deploy to Github pages
-        if: github.ref == 'refs/heads/main'
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          folder: packages/frontend/dist # Replace if your build output to a different folder
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Configure Poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --with dev
+
+      - name: Deploy to Render
+        run: |
+          git remote add render https://git.render.com/${{ secrets.RENDER_REPO_ID }}
+          git push render main

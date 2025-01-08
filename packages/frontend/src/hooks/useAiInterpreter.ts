@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Reading } from '../types'
+import { interpretHexagram, startChat, sendChatMessage } from '@services/api'
 
 const API_URL = 'http://localhost:8000/api'
 
@@ -51,107 +52,45 @@ export function useAiInterpreter(): UseAiInterpreterResult {
   }, [chatHistory])
 
   const getInterpretation = async (reading: Reading) => {
+    setIsLoading(true)
+    setError(null)
     try {
-      setIsLoading(true)
-      setError(null)
-      const response = await axios.post(`${API_URL}/reading/interpret`, reading)
-      const newInterpretation = response.data.interpretation
-
-      // Store interpretation with reading and timestamp
-      const stored: StoredInterpretation[] = JSON.parse(
-        localStorage.getItem(STORAGE_KEYS.INTERPRETATIONS) || '[]'
-      )
-      stored.push({
-        reading,
-        interpretation: newInterpretation,
-        timestamp: Date.now(),
-      })
-      localStorage.setItem(STORAGE_KEYS.INTERPRETATIONS, JSON.stringify(stored))
-
-      setInterpretation(newInterpretation)
-      setIsChatEnabled(true) // Enable chat immediately after getting interpretation
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.detail) {
-        setError(err.response.data.detail)
-      } else {
-        setError('Failed to get AI interpretation')
-      }
-      console.error('Interpretation error:', err)
+      setInterpretation(reading.interpretation)
+    } catch (e) {
+      setError(e instanceof Error ? e : new Error('Failed to get interpretation'))
     } finally {
       setIsLoading(false)
     }
   }
 
   const getEnhancedInterpretation = async (hexagramNumber: number) => {
+    setIsEnhancedLoading(true)
     try {
-      setIsEnhancedLoading(true)
-      setError(null)
-
-      // First, get the full hexagram data
-      const hexagramResponse = await axios.get(`${API_URL}/hexagrams/${hexagramNumber}`)
-      const hexagramData = hexagramResponse.data
-
-      // Then get the enhanced interpretation
-      const enhancedResponse = await axios.post(`${API_URL}/chat/enhanced`, { hexagram: hexagramData })
-      const newInterpretation = enhancedResponse.data.interpretation
-
-      setInterpretation(newInterpretation)
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.detail) {
-        setError(err.response.data.detail)
-      } else {
-        setError('Failed to get enhanced interpretation')
-      }
-      console.error('Enhanced interpretation error:', err)
+      const response = await interpretHexagram(hexagramNumber)
+      setInterpretation(response.data.interpretation)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to get enhanced interpretation')
     } finally {
       setIsEnhancedLoading(false)
     }
   }
 
-  const startChat = async () => {
+  const startAiChat = async () => {
     try {
-      setIsLoading(true)
-      setError(null)
-      const response = await axios.post(`${API_URL}/chat/start`)
-      const initialMessage = { role: 'assistant', content: response.data.message }
-      setChatHistory([initialMessage])
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.detail) {
-        setError(err.response.data.detail)
-      } else {
-        setError('Failed to start chat')
-      }
-      console.error('Chat start error:', err)
-    } finally {
-      setIsLoading(false)
+      await startChat()
+      setIsChatEnabled(true)
+    } catch (e) {
+      setError(e instanceof Error ? e : new Error('Failed to start chat'))
     }
   }
 
   const sendMessage = async (content: string) => {
     try {
-      setIsLoading(true)
-      setError(null)
-      
-      // Add user message to history
-      const userMessage: ChatMessage = { role: 'user', content }
-      setChatHistory(prev => [...prev, userMessage])
-
-      // Send message to API
-      const response = await axios.post(`${API_URL}/chat/message`, userMessage)
-      
-      // Add assistant response to history
-      const assistantMessage: ChatMessage = { role: 'assistant', content: response.data.message }
-      setChatHistory(prev => [...prev, assistantMessage])
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.detail) {
-        setError(err.response.data.detail)
-      } else {
-        setError('Failed to send message')
-      }
-      // Don't throw here to keep the user message in history even if API fails
-      console.error('Chat error:', err)
-    } finally {
-      setIsLoading(false)
+      setChatHistory(prev => [...prev, { role: 'user', content }])
+      const response = await sendChatMessage(content)
+      setChatHistory(prev => [...prev, { role: 'assistant', content: response.data.message }])
+    } catch (e) {
+      setError(e instanceof Error ? e : new Error('Failed to send message'))
     }
   }
 
@@ -169,9 +108,9 @@ export function useAiInterpreter(): UseAiInterpreterResult {
     error,
     getInterpretation,
     getEnhancedInterpretation,
-    startChat,
+    startChat: startAiChat,
     sendMessage,
     clearChat,
     isChatEnabled
   }
-} 
+}
