@@ -19,7 +19,6 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Constants
@@ -47,7 +46,6 @@ class GeminiAPIException(APIException):
         )
 
 
-        super().__init__(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
 class RateLimitException(APIException):
     def __init__(self, detail: str):
         super().__init__(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=detail)
@@ -61,7 +59,6 @@ class HexagramNotFoundException(APIException):
         )
 
 
-        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=f"Hexagram {hexagram_number} not found")
 class InvalidModeException(APIException):
     def __init__(self, mode: str):
         super().__init__(
@@ -69,10 +66,8 @@ class InvalidModeException(APIException):
         )
 
 
-        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid mode: {mode}")
 class InvalidLineNumberException(APIException):
     def __init__(self, line_number: int):
-        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid line number: {line_number}")
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid line number: {line_number}",
@@ -87,6 +82,10 @@ class MissingDataException(APIException):
 class InvalidJSONResponseException(APIException):
     def __init__(self, detail: str):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+
+class ConfigurationError(APIException): # Define a custom exception for configuration issues
+    def __init__(self, detail: str):
+        super().__init__(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
 
 
 # Global Exception Handler
@@ -135,7 +134,11 @@ class Config:
                 return json.load(f)
             except json.JSONDecodeError as e:
                 logger.error(f"Error decoding hexagrams JSON: {e}")
-                raise ValueError(f"Invalid JSON format in hexagrams file: {e}")
+                raise ConfigurationError(f"Invalid JSON format in hexagrams file: {e}") # Raise ConfigurationError
+            except Exception as e: # Catch other potential file errors
+                logger.error(f"Error loading hexagrams file: {e}")
+                raise ConfigurationError(f"Error loading hexagrams data: {e}") # Raise ConfigurationError
+
 
     @classmethod
     def load_prompts(cls) -> Dict[str, str]:
@@ -146,8 +149,23 @@ class Config:
                 "interpret_reading": "Interpret hexagram {hexagram_number}...",
                 "enhanced_prompt": "Provide enhanced interpretation...",
             }
-        with open(cls.PROMPTS_FILE, encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(cls.PROMPTS_FILE, encoding="utf-8") as f:
+                return json.load(f)
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding prompts JSON: {e}")
+            return { # Return defaults instead of raising error, as prompts are less critical
+                "system_prompt": cls.DEFAULT_SYSTEM_PROMPT,
+                "interpret_reading": "Interpret hexagram {hexagram_number}...",
+                "enhanced_prompt": "Provide enhanced interpretation...",
+            }
+        except FileNotFoundError:
+            logger.warning("Prompts file not found, using defaults.")
+            return { # Return defaults if file not found
+                "system_prompt": cls.DEFAULT_SYSTEM_PROMPT,
+                "interpret_reading": "Interpret hexagram {hexagram_number}...",
+                "enhanced_prompt": "Provide enhanced interpretation...",
+            }
 
 
 # Data Models
@@ -199,8 +217,6 @@ class HexagramData(BaseModel):
         return v
 
 
-
-
 class Line(BaseModel):
     lineNumber: int = Field(..., ge=1, le=6)
     type: str = Field(..., enum=["yin", "yang"])
@@ -216,7 +232,6 @@ class TrigramSignificance(BaseModel):
     relationship: str
 
 
-
 class PrimaryHexagram(BaseModel):
     number: int = Field(..., ge=1, le=64)
     name: str
@@ -226,7 +241,7 @@ class PrimaryHexagram(BaseModel):
     lines: List[Line]
     upper_trigram: str
     lower_trigram: str
-    trigram_significance: Optional[TrigramSignificance] = None  # Make this optional
+    trigram_significance: Optional[TrigramSignificance] = None
     commentary: Optional[List[str]] = None
     changing_lines: List[int] = []
 
@@ -235,50 +250,17 @@ class RelatingHexagram(BaseModel):
     number: int
     name: str
     chinese: str
-    description: str = ""  # Make optional by providing default
-    judgment: str = ""  # Make optional by providing default
-    image: str = ""  # Make optional by providing default
+    description: str = ""
+    judgment: str = ""
+    image: str = ""
     commentary: Optional[List[str]] = None
 
     @classmethod
     def from_primary_hexagram(cls, hexagram: PrimaryHexagram) -> "RelatingHexagram":
-        return cls(
-            number=hexagram.number,
-            name=hexagram.name,
-            chinese=hexagram.chinese_name,  # Corrected field name
-            description=hexagram.image,  # Or another appropriate field from PrimaryHexagram
-            judgment=hexagram.judgment,
-            image=hexagram.image,
-            commentary=hexagram.commentary,
-        )
-
-
-class ReadingResponse(BaseModel):
-    hexagram_number: int = Field(..., ge=MIN_HEXAGRAM_NUMBER, le=MAX_HEXAGRAM_NUMBER)
-    changing_lines: List[int] = Field(default_factory=list)
-    lines: List[int] = Field(..., min_items=MAX_LINE_NUMBER, max_items=MAX_LINE_NUMBER)
-    reading: HexagramData
-    relating_hexagram: Optional[RelatingHexagram] = None
-    has_ai_interpretation: bool = False
-    ai_interpretation_available: bool = True
-
-    @field_validator("changing_lines")
-    def validate_changing_lines(cls, v):
-        if not all(MIN_LINE_NUMBER <= x <= MAX_LINE_NUMBER for x in v):
-            raise ValueError(
-                f"Changing lines must be between {MIN_LINE_NUMBER} and {MAX_LINE_NUMBER}"
-            )
-        return v
-
-
-class Message(BaseModel):
-    description: str = ""  # Make optional by providing default
-    judgment: str = ""  # Make optional by providing default
-    image: str = ""  # Make optional by providing default
-    commentary: Optional[List[str]] = None
-
-    @classmethod
-    def from_primary_hexagram(cls, hexagram: PrimaryHexagram) -> "RelatingHexagram":
+        """
+        Creates a RelatingHexagram from a PrimaryHexagram.
+        This is useful for converting between the two model types.
+        """
         return cls(
             number=hexagram.number,
             name=hexagram.name,
@@ -295,7 +277,7 @@ class ReadingResponse(BaseModel):
     changing_lines: List[int] = Field(default_factory=list)
     lines: List[int] = Field(..., min_items=MAX_LINE_NUMBER, max_items=MAX_LINE_NUMBER)
     reading: HexagramData
-    relating_hexagram: Optional[RelatingHexagram] = None
+    relating_hexagram: Optional[RelatingHexagram] = None # Optional as there might not be relating hexagram
     has_ai_interpretation: bool = False
     ai_interpretation_available: bool = True
 
@@ -308,7 +290,7 @@ class ReadingResponse(BaseModel):
         return v
 
 
-class Message(BaseModel):
+class Message(BaseModel): # Keeping Message for chat functionality, but removed from_primary_hexagram
     role: str
     content: str
 
@@ -535,6 +517,14 @@ class HexagramService(HexagramServiceInterface):
             hexagrams = {h["number"]: self._convert_hexagram_data(h) for h in data}
             logger.info("Hexagrams loaded successfully.")
             return hexagrams
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding hexagrams JSON: {e}")
+            raise ConfigurationError(f"Invalid JSON format in hexagrams file: {e}") # Raise ConfigurationError
+        except FileNotFoundError:
+            logger.error("Hexagrams file not found.")
+            raise ConfigurationError("Hexagrams data file not found.") # Raise ConfigurationError
+        except ConfigurationError: # Re-raise ConfigurationError to be handled upstream
+            raise
         except Exception as e:
             logger.error(f"Error loading hexagrams: {e}")
             raise GeminiAPIException(detail="Failed to load hexagram data")
@@ -735,7 +725,11 @@ class ReadingService(ReadingServiceInterface):
 
     @handle_key_error
     async def generate_reading(self, mode: str) -> ReadingResponse:
-        """Generate initial reading without AI interpretation"""
+        """
+        Generate initial reading without AI interpretation.
+
+        The relating_hexagram field in the response will be populated only if there are changing lines.
+        """
         logger.info(f"Generating reading: mode={mode}")
         try:
             if not self.hexagram_service.hexagrams:
@@ -771,8 +765,8 @@ class ReadingService(ReadingServiceInterface):
                 logger.error(f"Error converting primary hexagram: {e}")
                 raise ValueError(f"Failed to convert primary hexagram: {str(e)}")
 
-            relating_hexagram = None
-            if changing_lines:
+            relating_hexagram = None # Initialize to None
+            if changing_lines: # Only calculate and include relating hexagram if there are changing lines
                 try:
                     # Calculate relating hexagram if there are changing lines
                     relating_number = self._calculate_relating_hexagram_number(
@@ -796,7 +790,7 @@ class ReadingService(ReadingServiceInterface):
                     changing_lines=changing_lines,
                     lines=lines,
                     reading=hexagram_data,
-                    relating_hexagram=relating_hexagram,
+                    relating_hexagram=relating_hexagram, # relating_hexagram will be None if no changing lines
                     has_ai_interpretation=False,
                     ai_interpretation_available=bool(self.genai_client),
                 )
@@ -1099,7 +1093,7 @@ async def enhanced_interpretation(
     interpretation_service: InterpretationService = Depends(get_interpretation_service),
 ):
     try:
-        hexagram_service = HexagramService()  # This should be inside the try block
+        hexagram_service = HexagramService()
         hexagram = hexagram_service.hexagrams[request.hexagram_number]
         prompt = self.genai_client.prompts.get("enhanced_prompt").format(
             hexagram_number=hexagram.number,
@@ -1150,4 +1144,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

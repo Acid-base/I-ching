@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class GeminiGenerateContentRequest(BaseModel):
     contents: List[dict]
     tools: Optional[List[dict]] = None
-    generationConfig: Optional[dict]] = None
+    generationConfig: Optional[dict] = None
     safetySettings: Optional[List[dict]] = None
     responseMimeType: Optional[str] = None
 
