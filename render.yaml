@@ -1,18 +1,17 @@
 # Render Blueprint for I Ching application
-# Configures both frontend and backend services
+# Troubleshooting configuration based on Render docs
 
 services:
   # Backend API service
   - type: web
     name: iching-backend
     runtime: python
-    plan: free # Use free plan for development
-    rootDir: divination # Specify the root directory for backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    buildCommand: cd ${RENDER_CHECKOUT_DIR}/divination && ls -la && pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: cd ${RENDER_CHECKOUT_DIR}/divination && python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: "3.13.0"
+        value: "3.11.0"  # Keeping the full version including patch number
       - key: PORT
         value: "8000"
       - key: ENVIRONMENT
@@ -24,13 +23,12 @@ services:
   - type: web
     name: iching-frontend
     runtime: node
-    plan: free # Use free plan for development
-    rootDir: packages/frontend # Specify the root directory for frontend
-    buildCommand: npm install && npm run build
-    startCommand: chmod +x serve.sh && ./serve.sh
+    plan: free
+    buildCommand: cd ${RENDER_CHECKOUT_DIR}/packages/frontend && ls -la && npm install && npm run build
+    startCommand: cd ${RENDER_CHECKOUT_DIR}/packages/frontend && npm run preview -- --port $PORT --host 0.0.0.0
     envVars:
       - key: NODE_VERSION
-        value: "18"
+        value: "18.0.0"  # Keeping the full version including patch number
       - key: PORT
         value: "10000"
       - key: VITE_API_URL
