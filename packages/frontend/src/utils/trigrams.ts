@@ -1,4 +1,4 @@
-import type { Trigram } from "../types";
+import type { Trigram } from '../types';
 
 interface TrigramData {
   name: string;
@@ -11,17 +11,17 @@ interface TrigramData {
 // Using a const assertion for better type inference
 const TRIGRAMS: Record<string, Trigram> = {
   HEAVEN: {
-    name: "Heaven",
-    chinese: "乾", // Adding the missing chinese property
-    attribute: "Strong",
-    element: "Metal",
+    name: 'Heaven',
+    chinese: '乾', // Adding the missing chinese property
+    attribute: 'Strong',
+    element: 'Metal',
     lines: [1, 1, 1],
   },
   EARTH: {
-    name: "Earth",
-    chinese: "坤", // Adding the missing chinese property
-    attribute: "Receptive",
-    element: "Earth",
+    name: 'Earth',
+    chinese: '坤', // Adding the missing chinese property
+    attribute: 'Receptive',
+    element: 'Earth',
     lines: [0, 0, 0],
   },
   // ... add other trigrams
@@ -30,9 +30,7 @@ const TRIGRAMS: Record<string, Trigram> = {
 export type TrigramKey = keyof typeof TRIGRAMS;
 
 export function getTrigramData(lines: number[]): Trigram | null {
-  const key = Object.keys(TRIGRAMS).find((key) =>
-    TRIGRAMS[key].lines?.every((line, i) => line === lines[i])
-  );
+  const key = Object.keys(TRIGRAMS).find((key) => TRIGRAMS[key].lines?.every((line, i) => line === lines[i]));
   return key ? TRIGRAMS[key] : null;
 }
 

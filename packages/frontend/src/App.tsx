@@ -35,11 +35,10 @@ import { FaBook, FaChartLine, FaComments, FaExchangeAlt, FaLightbulb, FaYinYang 
 const spin = keyframes`
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-`
+`;
 
 const YinYangSpinner = () => {
-  const purple = useToken('colors', 'purple.500')
-
+  const purple = useToken('colors', 'purple.500');
   return (
     <Box
       display="flex"
@@ -49,19 +48,18 @@ const YinYangSpinner = () => {
     >
       <Icon as={FaYinYang} w={20} h={20} color={purple} />
     </Box>
-  )
-}
+  );
+};
 
 interface ProcessStepProps {
-  icon: React.ElementType
-  title: string
-  description: string
+  icon: React.ElementType;
+  title: string;
+  description: string;
 }
 
 const ProcessStep = ({ icon, title, description }: ProcessStepProps) => {
-  const bgColor = useColorModeValue('white', 'gray.800')
-  const borderColor = useColorModeValue('gray.200', 'gray.700')
-
+  const bgColor = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
   return (
     <Card bg={bgColor} borderColor={borderColor} borderWidth="1px">
       <CardBody>
@@ -72,12 +70,20 @@ const ProcessStep = ({ icon, title, description }: ProcessStepProps) => {
         </VStack>
       </CardBody>
     </Card>
-  )
-}
+  );
+};
+
+const ComponentItem = ({ icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
+  <ListItem>
+    <ListIcon as={icon} color="purple.500" />
+    <Text as="span" fontWeight="bold">{title}</Text>
+    <Text>{description}</Text>
+  </ListItem>
+);
 
 const ReadingOverview = () => {
-  const bgColor = useColorModeValue('gray.50', 'gray.800')
-  const borderColor = useColorModeValue('gray.200', 'gray.700')
+  const bgColor = useColorModeValue('gray.50', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
 
   return (
     <VStack spacing={6} w="full">
@@ -95,25 +101,26 @@ const ReadingOverview = () => {
           </h3>
           <AccordionPanel>
             <List spacing={3}>
-              <ListItem>
-                <ListIcon as={FaYinYang} color="purple.500" />
-                <Text as="span" fontWeight="bold">Primary Hexagram:</Text>
-                <Text>The main symbol formed by your cast, consisting of six lines representing yin and yang energies.</Text>
-              </ListItem>
-              <ListItem>
-                <ListIcon as={FaExchangeAlt} color="purple.500" />
-                <Text as="span" fontWeight="bold">Changing Lines:</Text>
-                <Text>Lines that are in transition, indicating areas of change or focus in your situation.</Text>
-              </ListItem>
-              <ListIcon as={FaBook} color="purple.500" />
-                <Text as="span" fontWeight="bold">Judgment & Image:</Text>
-                <Text>Traditional interpretations providing guidance and symbolic imagery.</Text>
-              </ListItem>
-              <ListItem>
-                <ListIcon as={FaLightbulb} color="purple.500" />
-                <Text as="span" fontWeight="bold">AI Interpretation:</Text>
-                <Text>Modern analysis connecting ancient wisdom to your contemporary situation.</Text>
-              </ListItem>
+              <ComponentItem
+                icon={FaYinYang}
+                title="Primary Hexagram:"
+                description="The main symbol formed by your cast, consisting of six lines representing yin and yang energies."
+              />
+              <ComponentItem
+                icon={FaExchangeAlt}
+                title="Changing Lines:"
+                description="Lines that are in transition, indicating areas of change or focus in your situation."
+              />
+              <ComponentItem
+                icon={FaBook}
+                title="Judgment & Image:"
+                description="Traditional interpretations providing guidance and symbolic imagery."
+              />
+              <ComponentItem
+                icon={FaLightbulb}
+                title="AI Interpretation:"
+                description="Modern analysis connecting ancient wisdom to your contemporary situation."
+              />
             </List>
           </AccordionPanel>
         </AccordionItem>
@@ -179,12 +186,12 @@ const ReadingOverview = () => {
         </AccordionItem>
       </Accordion>
     </VStack>
-  )
-}
+  );
+};
 
 const LandingSection = ({ onGenerate, isLoading }: { onGenerate: () => void, isLoading: boolean }) => {
-  const bgColor = useColorModeValue('gray.50', 'gray.800')
-  const borderColor = useColorModeValue('gray.200', 'gray.700')
+  const bgColor = useColorModeValue('gray.50', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
 
   return (
     <Container maxW="container.md" py={20}>
@@ -198,18 +205,14 @@ const LandingSection = ({ onGenerate, isLoading }: { onGenerate: () => void, isL
         textAlign="center"
       >
         <YinYangSpinner />
-
         <Heading size="xl">Welcome to I Ching</Heading>
-
         <Text fontSize="lg" color="gray.600">
           The I Ching, or Book of Changes, is an ancient Chinese divination text and one of the oldest of the Chinese classics.
           Through a process of casting coins or yarrow stalks, it provides guidance and wisdom for your questions and situations.
         </Text>
-
         <Text fontSize="md" color="gray.500">
           Click the button below to begin your consultation. Take a moment to center yourself and focus on your question.
         </Text>
-
         <Button
           onClick={onGenerate}
           isLoading={isLoading}
@@ -221,14 +224,12 @@ const LandingSection = ({ onGenerate, isLoading }: { onGenerate: () => void, isL
         >
           Generate Reading
         </Button>
-
         <Divider />
-
         <ReadingOverview />
       </VStack>
     </Container>
-  )
-}
+  );
+};
 
 export function App() {
   const {
@@ -236,7 +237,7 @@ export function App() {
     isGenerating,
     generateError,
     generate,
-  } = useHexagram()
+  } = useHexagram();
 
   const {
     interpretation,
@@ -247,9 +248,9 @@ export function App() {
     getEnhancedInterpretation,
     startChat,
     isChatEnabled,
-  } = useAiInterpreter()
+  } = useAiInterpreter();
 
-  const toast = useToast()
+  const toast = useToast();
 
   const handleGenerate = async () => {
     try {
@@ -265,10 +266,10 @@ export function App() {
         status: 'error',
       });
     }
-  }
+  };
 
   const handleGetEnhanced = async () => {
-    if (!reading) return
+    if (!reading) return;
     try {
       // Get hexagram_number from either the root or data property
       const hexagramNumber = ('data' in reading && reading.data?.hexagram_number)
@@ -279,15 +280,15 @@ export function App() {
         throw new Error('Invalid reading: hexagram number not found');
       }
 
-      await getEnhancedInterpretation(hexagramNumber)
+      await getEnhancedInterpretation(hexagramNumber);
     } catch (error) {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to get enhanced interpretation',
         status: 'error',
-      })
+      });
     }
-  }
+  };
 
   const handleStartChat = async () => {
     try {
@@ -321,7 +322,7 @@ export function App() {
         status: 'error',
       });
     }
-  }
+  };
 
   return (
     <Box minH="100vh" py={8}>
@@ -346,5 +347,5 @@ export function App() {
         </VStack>
       )}
     </Box>
-  )
+  );
 }
