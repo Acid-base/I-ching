@@ -1,4 +1,4 @@
-import { ReadingResponse } from '@/types';
+import { type ReadingResponse } from '@/types';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useEffect, useState } from 'react';
 
@@ -13,8 +13,8 @@ const STORAGE_KEYS = {
 } as const;
 
 // Initialize Google Generative AI SDK
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+const model = genAI?.getGenerativeModel({
   model: 'gemini-1.5-flash',
 });
 
@@ -64,8 +64,19 @@ export function useAiInterpreter(): UseAiInterpreterResult {
   const [isChatEnabled, setIsChatEnabled] = useState(false);
   const [currentReading, setCurrentReading] = useState<ReadingResponse | null>(() => {
     // Try to load the current reading from localStorage on initial mount
-    const savedReading = localStorage.getItem(STORAGE_KEYS.CURRENT_READING);
-    return savedReading ? JSON.parse(savedReading) : null;
+    try {
+      const savedReading = localStorage.getItem(STORAGE_KEYS.CURRENT_READING);
+      if (!savedReading) return null;
+
+      const parsedReading = JSON.parse(savedReading);
+      // Accept any valid object as a reading, don't validate structure
+      return parsedReading;
+    } catch (e) {
+      console.error('Error loading reading from localStorage:', e);
+      // Clear the invalid data
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_READING);
+      return null;
+    }
   });
 
   // Reset chat when component mounts
@@ -84,7 +95,8 @@ export function useAiInterpreter(): UseAiInterpreterResult {
   // Save current reading to localStorage when it changes
   useEffect(() => {
     if (currentReading) {
-      console.log('Saving current reading to localStorage:', currentReading.hexagram_number);
+      // Save regardless of structure - don't check for data.hexagram_number
+      console.log('Saving current reading to localStorage');
       localStorage.setItem(STORAGE_KEYS.CURRENT_READING, JSON.stringify(currentReading));
     }
   }, [currentReading]);
@@ -99,8 +111,8 @@ export function useAiInterpreter(): UseAiInterpreterResult {
 
     try {
       // Check if API key is available
-      if (!GEMINI_API_KEY) {
-        const basicInterpretation = `Hexagram ${reading.hexagram_number}: ${reading.reading.name || 'Unknown'}`;
+      if (!GEMINI_API_KEY || !model) {
+        const basicInterpretation = `Hexagram ${reading.data.hexagram_number}: ${reading.data.reading.name || 'Unknown'}`;
         setInterpretation(basicInterpretation);
         console.log('No GEMINI_API_KEY found. Using basic interpretation.');
         return;
@@ -108,19 +120,12 @@ export function useAiInterpreter(): UseAiInterpreterResult {
 
       // Build the prompt for Gemini with system instruction included
       const prompt = `${SYSTEM_INSTRUCTION}
-
       I'd like an interpretation of an I Ching reading.
-
-      Primary Hexagram: ${reading.hexagram_number} - ${reading.reading.name} (${reading.reading.chineseName})
-
-      Judgment: ${typeof reading.reading.judgment === 'string' ? reading.reading.judgment : reading.reading.judgment?.text}
-
-      Image: ${typeof reading.reading.image === 'string' ? reading.reading.image : reading.reading.image?.text}
-
-      ${reading.changing_lines.length > 0 ? `Changing Lines: ${reading.changing_lines.join(', ')}` : 'No changing lines'}
-
-      ${reading.relating_hexagram ? `Relating Hexagram: ${reading.relating_hexagram.number} - ${reading.relating_hexagram.name} (${reading.relating_hexagram.chineseName})` : ''}
-
+      Primary Hexagram: ${reading.data.hexagram_number} - ${reading.data.reading.name} (${reading.data.reading.chinese})
+      Judgment: ${typeof reading.data.reading.judgment === 'string' ? reading.data.reading.judgment : reading.data.reading.judgment?.text}
+      Image: ${typeof reading.data.reading.image === 'string' ? reading.data.reading.image : reading.data.reading.image?.text}
+      ${reading.data.changing_lines.length > 0 ? `Changing Lines: ${reading.data.changing_lines.join(', ')}` : 'No changing lines'}
+      ${reading.data.relating_hexagram ? `Relating Hexagram: ${reading.data.relating_hexagram.number} - ${reading.data.relating_hexagram.name} (${reading.data.relating_hexagram.chinese})` : ''}
       Please provide a comprehensive interpretation of this reading, including:
       1. The general meaning of the hexagram in the context of a divination
       2. Interpretation of any changing lines and their significance
@@ -129,12 +134,10 @@ export function useAiInterpreter(): UseAiInterpreterResult {
       `;
 
       console.log('Sending prompt to Gemini');
-
       // Generate content using Gemini
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const aiInterpretation = response.text();
-
       console.log('Received AI interpretation');
       setInterpretation(aiInterpretation);
     } catch (e) {
@@ -150,28 +153,25 @@ export function useAiInterpreter(): UseAiInterpreterResult {
     setIsEnhancedLoading(true);
 
     try {
-      if (!GEMINI_API_KEY) {
+      if (!GEMINI_API_KEY || !model) {
         setError('Gemini API key is required for enhanced interpretations');
         return;
       }
 
       const prompt = `
       I'd like a deep philosophical and practical interpretation of I Ching hexagram ${hexagramNumber}.
-
       Please include:
       1. The hexagram's core meaning and symbolism
       2. Historical context and traditional interpretations
       3. Psychological implications according to Jung and others
       4. How this hexagram applies to different life areas (relationships, career, spiritual growth)
       5. Practical advice and reflection questions
-
       Format the response with clear sections and meaningful insights.
       `;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const enhancedInterpretation = response.text();
-
       setInterpretation(enhancedInterpretation);
     } catch (e) {
       console.error('Error in getEnhancedInterpretation:', e);
@@ -183,30 +183,56 @@ export function useAiInterpreter(): UseAiInterpreterResult {
 
   const startAiChat = async (providedReading?: ReadingResponse) => {
     console.log('Starting AI chat');
-
     // Use the provided reading if available, otherwise check localStorage
     let readingToUse = providedReading;
-
     if (!readingToUse) {
       console.log('No reading provided to startChat, checking state and localStorage...');
-
       // If no reading was provided, try to use the one in state
       readingToUse = currentReading;
-
       // If still no reading, check localStorage
       if (!readingToUse) {
-        const savedReadingStr = localStorage.getItem(STORAGE_KEYS.CURRENT_READING);
-        console.log('Reading from localStorage when starting chat:', savedReadingStr);
-        readingToUse = savedReadingStr ? JSON.parse(savedReadingStr) : null;
+        try {
+          const savedReadingStr = localStorage.getItem(STORAGE_KEYS.CURRENT_READING);
+          console.log('Reading from localStorage when starting chat:', savedReadingStr);
+          if (savedReadingStr) {
+            const parsedReading = JSON.parse(savedReadingStr);
+            // Verify the parsed data has the expected structure
+            if (parsedReading) {
+              readingToUse = parsedReading;
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing reading from localStorage:', e);
+          localStorage.removeItem(STORAGE_KEYS.CURRENT_READING);
+        }
       }
     } else {
-      console.log('Reading provided to startChat:', providedReading.hexagram_number);
+      console.log('Reading provided to startChat:', providedReading);
       // Update currentReading state with the provided reading
       setCurrentReading(providedReading);
     }
 
+    // Check if the reading exists
     if (!readingToUse) {
-      console.error('No reading found in provided params, state, or localStorage');
+      console.error('No valid reading found in provided params, state, or localStorage');
+      setChatHistory([
+        {
+          role: 'assistant',
+          content:
+            "Hello! I can help you explore I Ching readings. However, it seems we don't have a complete reading to discuss yet.",
+        },
+      ]);
+      setIsChatEnabled(true);
+      return;
+    }
+
+    // Normalize the reading structure to ensure we can access hexagram_number regardless of structure
+    const hasDataProperty = readingToUse && 'data' in readingToUse && readingToUse.data;
+    const hexagramNumber = hasDataProperty ? readingToUse.data.hexagram_number : (readingToUse as any).hexagram_number;
+    const hexagramName = hasDataProperty ? readingToUse.data.reading.name : (readingToUse as any).reading.name;
+
+    if (!hexagramNumber || !hexagramName) {
+      console.error('Reading is missing hexagram number or name');
       setChatHistory([
         {
           role: 'assistant',
@@ -219,16 +245,14 @@ export function useAiInterpreter(): UseAiInterpreterResult {
     }
 
     try {
-      console.log('Using reading for chat:', readingToUse.hexagram_number);
-
+      console.log('Using reading for chat:', hexagramNumber);
       // Set up the chat with the available reading
       setChatHistory([
         {
           role: 'assistant',
-          content: `Hello! I'm ready to discuss your I Ching reading of Hexagram ${readingToUse.hexagram_number}: ${readingToUse.reading.name}. What would you like to know about this reading?`,
+          content: `Hello! I'm ready to discuss your I Ching reading of Hexagram ${hexagramNumber}: ${hexagramName}. What would you like to know about this reading?`,
         },
       ]);
-
       setIsChatEnabled(true);
     } catch (e) {
       console.error('Error starting chat:', e);
@@ -238,12 +262,11 @@ export function useAiInterpreter(): UseAiInterpreterResult {
 
   const sendMessage = async (content: string) => {
     console.log('Sending message:', content);
-
     // First add the user message to chat history
     setChatHistory((prev) => [...prev, { role: 'user', content }]);
 
     try {
-      if (!GEMINI_API_KEY) {
+      if (!GEMINI_API_KEY || !model) {
         setChatHistory((prev) => [
           ...prev,
           {
@@ -254,14 +277,30 @@ export function useAiInterpreter(): UseAiInterpreterResult {
         return;
       }
 
-      // Check again for the reading
-      const savedReadingStr = localStorage.getItem(STORAGE_KEYS.CURRENT_READING);
-      console.log('Reading from localStorage when sending message:', savedReadingStr);
+      // Check for the reading with proper validation for both structures
+      let readingToUse: ReadingResponse | null = null;
 
-      const readingToUse = currentReading || (savedReadingStr ? JSON.parse(savedReadingStr) : null);
+      // First try to use the reading from state
+      if (currentReading) {
+        readingToUse = currentReading;
+      } else {
+        // If not available in state, try localStorage
+        try {
+          const savedReadingStr = localStorage.getItem(STORAGE_KEYS.CURRENT_READING);
+          if (savedReadingStr) {
+            const parsedReading = JSON.parse(savedReadingStr);
+            if (parsedReading) {
+              readingToUse = parsedReading;
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing reading from localStorage in sendMessage:', e);
+          localStorage.removeItem(STORAGE_KEYS.CURRENT_READING);
+        }
+      }
 
       if (!readingToUse) {
-        console.error('No reading found when trying to send message');
+        console.error('No valid reading found when trying to send message');
         setChatHistory((prev) => [
           ...prev,
           {
@@ -273,20 +312,44 @@ export function useAiInterpreter(): UseAiInterpreterResult {
         return;
       }
 
+      // Normalize the reading structure
+      const hasDataProperty = readingToUse && 'data' in readingToUse && readingToUse.data;
+      const hexagramNumber = hasDataProperty
+        ? readingToUse.data.hexagram_number
+        : (readingToUse as any).hexagram_number;
+      const hexagramName = hasDataProperty ? readingToUse.data.reading.name : (readingToUse as any).reading.name;
+      const hexagramChinese = hasDataProperty
+        ? readingToUse.data.reading.chinese
+        : (readingToUse as any).reading.chinese;
+      const changingLines = hasDataProperty ? readingToUse.data.changing_lines : (readingToUse as any).changing_lines;
+      const relatingHexagram = hasDataProperty
+        ? readingToUse.data.relating_hexagram
+        : (readingToUse as any).relating_hexagram;
+
+      if (!hexagramNumber || !hexagramName) {
+        console.error('Reading is missing hexagram number or name');
+        setChatHistory((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content:
+              "I apologize, but I don't have complete information about your reading. Please generate a new reading.",
+          },
+        ]);
+        return;
+      }
+
       // Create context with the reading data
       const userMessageWithContext = `
 ${SYSTEM_INSTRUCTION}
-
 READING INFORMATION:
-- Primary Hexagram: ${readingToUse.hexagram_number} - ${readingToUse.reading.name} (${readingToUse.reading.chineseName || ''})
-- Changing Lines: ${readingToUse.changing_lines && readingToUse.changing_lines.length > 0 ? readingToUse.changing_lines.join(', ') : 'None'}
-- Relating Hexagram: ${readingToUse.relating_hexagram ? `${readingToUse.relating_hexagram.number} - ${readingToUse.relating_hexagram.name}` : 'None'}
-
+- Primary Hexagram: ${hexagramNumber} - ${hexagramName} (${hexagramChinese || ''})
+- Changing Lines: ${changingLines && changingLines.length > 0 ? changingLines.join(', ') : 'None'}
+- Relating Hexagram: ${relatingHexagram ? `${relatingHexagram.number} - ${relatingHexagram.name}` : 'None'}
 USER QUESTION: ${content}
 `;
 
       console.log('Sending message to Gemini with reading context');
-
       // Create a simple chat with only the current exchange
       const result = await model.generateContent(userMessageWithContext);
       const response = await result.response;

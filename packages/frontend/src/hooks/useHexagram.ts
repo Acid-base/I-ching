@@ -1,4 +1,4 @@
-import type { ReadingResponse } from '@/types';
+import { type ReadingResponse } from '@/types';
 import { generateReading } from '@services/api';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -9,11 +9,12 @@ interface UseHexagramResult {
   reading: ReadingResponse | null;
   isGenerating: boolean;
   generateError: Error | null;
-  generate: () => Promise<void>;
+  generate: () => Promise<ReadingResponse | void>;
   interpretation: string | null;
   isInterpreting: boolean;
-  getInterpretation: () => Promise<void>;
+  getInterpretation: (readingData?: ReadingResponse) => Promise<void>;
   clearReading: () => void;
+  setMode?: (mode: 'yarrow' | 'coin') => void;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -40,7 +41,7 @@ export function useHexagram(): UseHexagramResult {
     [mode]
   );
 
-  const generate = async () => {
+  const generate = async (): Promise<ReadingResponse | void> => {
     console.log('Generating reading...');
     setIsGenerating(true);
     setGenerateError(null);
@@ -61,13 +62,14 @@ export function useHexagram(): UseHexagramResult {
 
   // Memoize interpretation function
   const getInterpretation = useCallback(
-    async (readingData: ReadingResponse) => {
-      console.log('Getting interpretation for:', readingData);
-      if (!readingData) return;
+    async (readingData?: ReadingResponse) => {
+      const dataToUse = readingData || reading;
+      console.log('Getting interpretation for:', dataToUse);
+      if (!dataToUse) return;
 
       try {
         setIsInterpreting(true);
-        const cacheKey = ['interpretation', readingData.hexagram_number];
+        const cacheKey = ['interpretation', dataToUse.data.hexagram_number];
         const cachedInterpretation = queryClient.getQueryData<string>(cacheKey);
 
         if (cachedInterpretation) {
@@ -77,7 +79,11 @@ export function useHexagram(): UseHexagramResult {
         }
 
         console.log('Fetching interpretation...');
-        const response = await axios.post(`${API_URL}/reading/interpret`, { reading: readingData });
+        const response = await axios.post(`${API_URL}/reading/interpret`, {
+          reading: dataToUse.data.reading,
+          hexagram_number: dataToUse.data.hexagram_number,
+        });
+
         console.log('Interpretation response:', response.data);
         setInterpretation(response.data.interpretation);
         queryClient.setQueryData(cacheKey, response.data.interpretation);
@@ -87,7 +93,7 @@ export function useHexagram(): UseHexagramResult {
         setIsInterpreting(false);
       }
     },
-    [queryClient]
+    [queryClient, reading]
   );
 
   const clearReading = useCallback(() => {
@@ -104,6 +110,5 @@ export function useHexagram(): UseHexagramResult {
     isInterpreting,
     getInterpretation,
     clearReading,
-    setMode,
   };
 }

@@ -1,14 +1,15 @@
-import type { HexagramMode } from '@/types';
+import { type HexagramMode, type ReadingResponse } from '@/types';
 import { generateReading } from '@services/api';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useState } from 'react';
 
 // Configure axios defaults
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 axios.defaults.timeout = 10000; // 10 seconds timeout
 
 export function useReading() {
-  const [mode, setMode] = useState<HexagramMode>('yarrow');
+  const [mode, setMode] = useState<HexagramMode>(HexagramMode.YARROW);
 
   const mutation = useMutation({
     mutationFn: () => generateReading(mode),
@@ -18,7 +19,7 @@ export function useReading() {
   });
 
   return {
-    reading: mutation.data,
+    reading: mutation.data as ReadingResponse | undefined,
     isLoading: mutation.isPending,
     error: mutation.error,
     generate: () => mutation.mutate(),

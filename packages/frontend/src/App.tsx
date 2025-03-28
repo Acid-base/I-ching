@@ -271,7 +271,12 @@ export function App() {
   const handleGetEnhanced = async () => {
     if (!reading) return
     try {
-      await getEnhancedInterpretation(reading.hexagram_number)
+      // Get hexagram_number from either the root or data property
+      const hexagramNumber = ('data' in reading && reading.data?.hexagram_number)
+        ? reading.data.hexagram_number
+        : reading.hexagram_number;
+
+      await getEnhancedInterpretation(hexagramNumber)
     } catch (error) {
       toast({
         title: 'Error',
@@ -285,7 +290,14 @@ export function App() {
     try {
       // Pass the current reading to the startChat function
       if (reading) {
-        await startChat(reading);
+        // Handle both possible structures of the reading object
+        const readingToUse = {
+          ...reading,
+          hexagram_number: ('data' in reading && reading.data?.hexagram_number)
+            ? reading.data.hexagram_number
+            : reading.hexagram_number
+        };
+        await startChat(readingToUse);
       } else {
         console.error('No reading available when trying to start chat');
         toast({
