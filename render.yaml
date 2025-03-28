@@ -1,5 +1,4 @@
 # Render Blueprint for I Ching application
-# Troubleshooting configuration based on Render docs
 
 services:
   # Backend API service
@@ -7,22 +6,8 @@ services:
     name: iching-backend
     runtime: python
     plan: free
-    buildCommand: >
-      echo "Root directory contents:" && ls -la &&
-      echo "Creating requirements.txt in the root directory" &&
-      cat > requirements.txt << 'EOF'
-      fastapi>=0.109.2
-      uvicorn>=0.27.0
-      pydantic>=2.5.3
-      python-dotenv>=1.0.1
-      typing-extensions>=4.9.0
-      argparse>=1.4.0
-      gunicorn>=23.0.0
-      EOF
-      &&
-      echo "Requirements file created:" && cat requirements.txt &&
-      pip install --upgrade pip && pip install -r requirements.txt
-    startCommand: cd divination && PYTHONPATH=$(pwd) python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+    buildCommand: cd divination && pip install -r requirements.txt
+    startCommand: cd divination && python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.13.0"
@@ -38,19 +23,12 @@ services:
     name: iching-frontend
     runtime: node
     plan: free
-    buildCommand: cd packages/frontend && ls -la && npm install && npm run build
+    buildCommand: cd packages/frontend && npm install && npm run build
     startCommand: cd packages/frontend && npm run preview -- --port $PORT --host 0.0.0.0
     envVars:
       - key: NODE_VERSION
-        value: "18.0.0"  # Keeping the full version including patch number
+        value: "18.0.0"
       - key: PORT
         value: "10000"
       - key: VITE_API_URL
         value: "https://iching-backend.onrender.com"
-
-# Optional: Environment groups for organizing environment variables
-# envVarGroups:
-#   - name: gemini-settings
-#     envVars:
-#       - key: VITE_GEMINI_API_KEY
-#         sync: false # Will prompt for value in Render dashboard
