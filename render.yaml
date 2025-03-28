@@ -7,11 +7,11 @@ services:
     name: iching-backend
     runtime: python
     plan: free
-    buildCommand: cd ${RENDER_CHECKOUT_DIR}/divination && ls -la && pip install --upgrade pip && pip install -r requirements.txt
+    buildCommand: cd ${RENDER_CHECKOUT_DIR}/divination && pip install --upgrade pip && pip install -r requirements.txt
     startCommand: cd ${RENDER_CHECKOUT_DIR}/divination && python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: "3.11.0"  # Keeping the full version including patch number
+        value: "3.13.0"  # Updated to match the version in the error message
       - key: PORT
         value: "8000"
       - key: ENVIRONMENT
