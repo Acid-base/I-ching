@@ -13,7 +13,7 @@ services:
       echo "Installing dependencies from divination/requirements.txt" &&
       pip install --upgrade pip &&
       pip install -r divination/requirements.txt
-    startCommand: cd divination && python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: cd divination && PYTHONPATH=$(pwd) python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.13.0"
