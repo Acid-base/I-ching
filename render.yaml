@@ -9,10 +9,19 @@ services:
     plan: free
     buildCommand: >
       echo "Root directory contents:" && ls -la &&
-      echo "Divination directory contents:" && ls -la divination &&
-      echo "Installing dependencies from divination/requirements.txt" &&
-      pip install --upgrade pip &&
-      pip install -r divination/requirements.txt
+      echo "Creating requirements.txt in the root directory" &&
+      cat > requirements.txt << 'EOF'
+      fastapi>=0.109.2
+      uvicorn>=0.27.0
+      pydantic>=2.5.3
+      python-dotenv>=1.0.1
+      typing-extensions>=4.9.0
+      argparse>=1.4.0
+      gunicorn>=23.0.0
+      EOF
+      &&
+      echo "Requirements file created:" && cat requirements.txt &&
+      pip install --upgrade pip && pip install -r requirements.txt
     startCommand: cd divination && PYTHONPATH=$(pwd) python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
