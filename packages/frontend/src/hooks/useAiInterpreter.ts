@@ -181,7 +181,7 @@ export function useAiInterpreter(): UseAiInterpreterResult {
     }
   };
 
-  const startAiChat = async (providedReading?: ReadingResponse) => {
+  const startAiChat = async (providedReading?: any) => {
     console.log('Starting AI chat');
     // Use the provided reading if available, otherwise check localStorage
     let readingToUse = providedReading;
@@ -209,7 +209,7 @@ export function useAiInterpreter(): UseAiInterpreterResult {
     } else {
       console.log('Reading provided to startChat:', providedReading);
       // Update currentReading state with the provided reading
-      setCurrentReading(providedReading);
+      setCurrentReading(providedReading as any);
     }
 
     // Check if the reading exists

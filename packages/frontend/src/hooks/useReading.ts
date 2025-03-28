@@ -1,4 +1,4 @@
-import { type HexagramMode, type ReadingResponse } from '@/types';
+import { HexagramMode, type ReadingResponse } from '@/types';
 import { generateReading } from '@services/api';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';

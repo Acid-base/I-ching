@@ -1,5 +1,13 @@
-import type { ChatResponse, ReadingResponse } from '@/types';
+import type { ReadingResponse } from '@/types';
 import axios from 'axios';
+
+// Define ChatResponse type locally since it's missing from @/types
+interface ChatResponse {
+  success: boolean;
+  data: {
+    message: string;
+  };
+}
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -81,12 +89,5 @@ export interface ReadingResponse {
       lines: string[];
     };
     interpretation: string;
-  };
-}
-
-export interface ChatResponse {
-  success: boolean;
-  data: {
-    message: string;
   };
 }

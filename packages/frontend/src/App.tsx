@@ -105,8 +105,7 @@ const ReadingOverview = () => {
                 <Text as="span" fontWeight="bold">Changing Lines:</Text>
                 <Text>Lines that are in transition, indicating areas of change or focus in your situation.</Text>
               </ListItem>
-              <ListItem>
-                <ListIcon as={FaBook} color="purple.500" />
+              <ListIcon as={FaBook} color="purple.500" />
                 <Text as="span" fontWeight="bold">Judgment & Image:</Text>
                 <Text>Traditional interpretations providing guidance and symbolic imagery.</Text>
               </ListItem>
@@ -274,7 +273,11 @@ export function App() {
       // Get hexagram_number from either the root or data property
       const hexagramNumber = ('data' in reading && reading.data?.hexagram_number)
         ? reading.data.hexagram_number
-        : reading.hexagram_number;
+        : (reading as any).hexagram_number;
+
+      if (!hexagramNumber) {
+        throw new Error('Invalid reading: hexagram number not found');
+      }
 
       await getEnhancedInterpretation(hexagramNumber)
     } catch (error) {
@@ -295,9 +298,14 @@ export function App() {
           ...reading,
           hexagram_number: ('data' in reading && reading.data?.hexagram_number)
             ? reading.data.hexagram_number
-            : reading.hexagram_number
+            : (reading as any).hexagram_number
         };
-        await startChat(readingToUse);
+
+        if (!readingToUse.hexagram_number) {
+          throw new Error('Invalid reading: hexagram number not found');
+        }
+
+        await startChat(readingToUse as any);
       } else {
         console.error('No reading available when trying to start chat');
         toast({

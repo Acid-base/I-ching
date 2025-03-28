@@ -12,12 +12,14 @@ interface TrigramData {
 const TRIGRAMS: Record<string, Trigram> = {
   HEAVEN: {
     name: "Heaven",
+    chinese: "乾", // Adding the missing chinese property
     attribute: "Strong",
     element: "Metal",
     lines: [1, 1, 1],
   },
   EARTH: {
     name: "Earth",
+    chinese: "坤", // Adding the missing chinese property
     attribute: "Receptive",
     element: "Earth",
     lines: [0, 0, 0],
@@ -29,7 +31,7 @@ export type TrigramKey = keyof typeof TRIGRAMS;
 
 export function getTrigramData(lines: number[]): Trigram | null {
   const key = Object.keys(TRIGRAMS).find((key) =>
-    TRIGRAMS[key].lines.every((line, i) => line === lines[i])
+    TRIGRAMS[key].lines?.every((line, i) => line === lines[i])
   );
   return key ? TRIGRAMS[key] : null;
 }
