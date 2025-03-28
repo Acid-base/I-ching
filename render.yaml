@@ -7,8 +7,8 @@ services:
     name: iching-backend
     runtime: python
     plan: free
-    buildCommand: cd ${RENDER_CHECKOUT_DIR}/divination && pip install --upgrade pip && pip install -r requirements.txt
-    startCommand: cd ${RENDER_CHECKOUT_DIR}/divination && python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+    buildCommand: cd divination && pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: cd divination && python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.13.0"  # Updated to match the version in the error message
@@ -24,8 +24,8 @@ services:
     name: iching-frontend
     runtime: node
     plan: free
-    buildCommand: cd ${RENDER_CHECKOUT_DIR}/packages/frontend && ls -la && npm install && npm run build
-    startCommand: cd ${RENDER_CHECKOUT_DIR}/packages/frontend && npm run preview -- --port $PORT --host 0.0.0.0
+    buildCommand: cd packages/frontend && ls -la && npm install && npm run build
+    startCommand: cd packages/frontend && npm run preview -- --port $PORT --host 0.0.0.0
     envVars:
       - key: NODE_VERSION
         value: "18.0.0"  # Keeping the full version including patch number
