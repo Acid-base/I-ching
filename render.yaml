@@ -6,8 +6,24 @@ services:
     name: iching-backend
     runtime: python
     plan: free
-    buildCommand: cd divination && pip install -r requirements.txt
-    startCommand: cd divination && python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+    buildCommand: |
+      ls -la
+      if [ -f divination/requirements.txt ]; then
+        echo "Installing from existing requirements.txt"
+        cat divination/requirements.txt
+        pip install -r divination/requirements.txt
+      else
+        echo "Creating requirements.txt"
+        echo "fastapi>=0.109.2
+        uvicorn>=0.27.0
+        pydantic>=2.5.3
+        python-dotenv>=1.0.1
+        typing-extensions>=4.9.0
+        argparse>=1.4.0
+        gunicorn>=23.0.0" > requirements.txt
+        pip install -r requirements.txt
+      fi
+    startCommand: cd divination && PYTHONPATH=$PYTHONPATH:$(pwd) python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.13.0"
