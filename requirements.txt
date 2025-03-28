@@ -1,0 +1,11 @@
+# Generated from divination/pyproject.toml
+# Note: This file reflects the constraints in pyproject.toml.
+# For exact versions used in development, prefer exporting from poetry.lock:
+# poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+fastapi>=0.109.2,<0.110.0
+uvicorn>=0.27.0,<0.28.0
+pydantic>=2.5.3,<3.0.0
+python-dotenv>=1.0.1,<2.0.0
+typing-extensions>=4.9.0,<5.0.0
+argparse>=1.4.0,<2.0.0
