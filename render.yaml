@@ -8,24 +8,15 @@ services:
     runtime: python
     plan: free
     buildCommand: >
-      echo "Current directory:" && pwd && echo "Directory contents:" && ls -la &&
-      cd divination && echo "Inside divination directory:" && pwd && ls -la &&
-      if [ ! -f requirements.txt ] || [ ! -s requirements.txt ]; then
-        echo "Creating requirements.txt from dependencies in pyproject.toml" &&
-        echo "fastapi>=0.109.2" > requirements.txt &&
-        echo "uvicorn>=0.27.0" >> requirements.txt &&
-        echo "pydantic>=2.5.3" >> requirements.txt &&
-        echo "python-dotenv>=1.0.1" >> requirements.txt &&
-        echo "typing-extensions>=4.9.0" >> requirements.txt &&
-        echo "argparse>=1.4.0" >> requirements.txt &&
-        echo "gunicorn>=23.0.0" >> requirements.txt;
-      fi &&
-      echo "requirements.txt contents:" && cat requirements.txt &&
-      pip install --upgrade pip && pip install -r requirements.txt
+      echo "Root directory contents:" && ls -la &&
+      echo "Divination directory contents:" && ls -la divination &&
+      echo "Installing dependencies from divination/requirements.txt" &&
+      pip install --upgrade pip &&
+      pip install -r divination/requirements.txt
     startCommand: cd divination && python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: "3.13.0"  # Updated to match the version in the error message
+        value: "3.13.0"
       - key: PORT
         value: "8000"
       - key: ENVIRONMENT
