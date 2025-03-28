@@ -7,8 +7,9 @@ services:
     name: iching-backend
     runtime: python
     plan: free # Use free plan for development
-    buildCommand: cd divination && pip install -r requirements.txt
-    startCommand: cd divination && uvicorn main:app --host 0.0.0.0 --port $PORT
+    rootDir: divination # Specify the root directory for backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.13.0"
@@ -24,8 +25,9 @@ services:
     name: iching-frontend
     runtime: node
     plan: free # Use free plan for development
-    buildCommand: cd packages/frontend && npm install && npm run build
-    startCommand: cd packages/frontend && chmod +x serve.sh && ./serve.sh
+    rootDir: packages/frontend # Specify the root directory for frontend
+    buildCommand: npm install && npm run build
+    startCommand: chmod +x serve.sh && ./serve.sh
     envVars:
       - key: NODE_VERSION
         value: "18"
