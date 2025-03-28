@@ -23,7 +23,11 @@ services:
     name: iching-frontend
     runtime: node
     plan: free
-    buildCommand: cd packages/frontend && npm install && npm run build
+    buildCommand: |
+      cd packages/frontend &&
+      rm -rf src/test &&
+      npm install &&
+      npm run build
     startCommand: cd packages/frontend && npm run preview -- --port $PORT --host 0.0.0.0
     envVars:
       - key: NODE_VERSION
