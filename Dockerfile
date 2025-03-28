@@ -2,20 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install Poetry
-RUN pip install --no-cache-dir poetry==1.7.1
-
-# Copy poetry configuration files
-COPY divination/pyproject.toml divination/poetry.lock ./
-
-# Configure poetry to not use virtualenvs inside Docker
-RUN poetry config virtualenvs.create false
-
-# Install dependencies
-RUN poetry install --no-dev --no-interaction --no-ansi
+# Install Python dependencies
+COPY divination/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY divination/ ./
+COPY divination/ .
 
 # Expose the port the app runs on
 EXPOSE 8000

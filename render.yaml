@@ -4,20 +4,15 @@ services:
     name: iching-backend
     runtime: python
     plan: free
-    buildCommand: cd divination && pip install poetry && poetry install
-    startCommand: cd divination && poetry run uvicorn main:app --host 0.0.0.0 --port $PORT
+    buildCommand: cd divination && pip install -r requirements.txt
+    startCommand: cd divination && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.13.0
+        value: 3.11
       - key: PORT
         value: 8000
       - key: ENVIRONMENT
         value: production
-      - key: CORS_ORIGINS # Note: This will provide the host, e.g., iching-frontend.onrender.com. Your backend code might need to prepend https://
-        fromService:
-          name: iching-frontend
-          type: web
-          property: host # Changed from url to host
 
   # Frontend service
   - type: web
@@ -31,8 +26,8 @@ services:
         value: 18
       - key: PORT
         value: 10000
-      - key: VITE_API_URL # Note: This will provide the host, e.g., iching-backend.onrender.com. Your frontend code needs to prepend https://
+      - key: VITE_API_URL
         fromService:
           name: iching-backend
           type: web
-          property: host # Changed from url to host
+          property: url
