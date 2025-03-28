@@ -5,11 +5,14 @@ import axios from 'axios';
 import { useCallback, useMemo, useState } from 'react';
 import { hexagramService } from '../services/hexagramService';
 
+// Define a consistent type that matches the actual API response structure
+type HexagramState = ReadingResponse | null;
+
 interface UseHexagramResult {
-  reading: ReadingResponse | null;
+  reading: HexagramState;
   isGenerating: boolean;
   generateError: Error | null;
-  generate: () => Promise<ReadingResponse | void>;
+  generate: () => Promise<any>;
   interpretation: string | null;
   isInterpreting: boolean;
   getInterpretation: (readingData?: ReadingResponse) => Promise<void>;
@@ -25,7 +28,7 @@ export function useHexagram(): UseHexagramResult {
   const [isInterpreting, setIsInterpreting] = useState(false);
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<'yarrow' | 'coin'>('yarrow');
-  const [reading, setReading] = useState<ReadingResponse | null>(null);
+  const [reading, setReading] = useState<HexagramState>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<Error | null>(null);
 
@@ -41,7 +44,7 @@ export function useHexagram(): UseHexagramResult {
     [mode]
   );
 
-  const generate = async (): Promise<ReadingResponse | void> => {
+  const generate = async (): Promise<any> => {
     console.log('Generating reading...');
     setIsGenerating(true);
     setGenerateError(null);
@@ -49,7 +52,8 @@ export function useHexagram(): UseHexagramResult {
       console.log('Calling generateReading API...');
       const response = await generateReading('yarrow');
       console.log('API response received:', response);
-      setReading(response);
+      // Use type assertion to ensure TypeScript understands the structure
+      setReading(response as any);
       return response;
     } catch (error) {
       console.error('Error generating reading:', error);
@@ -69,7 +73,18 @@ export function useHexagram(): UseHexagramResult {
 
       try {
         setIsInterpreting(true);
-        const cacheKey = ['interpretation', dataToUse.data.hexagram_number];
+
+        // Safely access properties using type guards to handle both possible structures
+        const hexagramNumber = dataToUse.data?.hexagram_number || (dataToUse as any).hexagram_number;
+
+        const readingObj = dataToUse.data?.reading || (dataToUse as any).reading;
+
+        if (!hexagramNumber) {
+          console.error('Invalid reading data structure:', dataToUse);
+          return;
+        }
+
+        const cacheKey = ['interpretation', hexagramNumber];
         const cachedInterpretation = queryClient.getQueryData<string>(cacheKey);
 
         if (cachedInterpretation) {
@@ -80,8 +95,8 @@ export function useHexagram(): UseHexagramResult {
 
         console.log('Fetching interpretation...');
         const response = await axios.post(`${API_URL}/reading/interpret`, {
-          reading: dataToUse.data.reading,
-          hexagram_number: dataToUse.data.hexagram_number,
+          reading: readingObj,
+          hexagram_number: hexagramNumber,
         });
 
         console.log('Interpretation response:', response.data);
