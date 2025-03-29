@@ -6,16 +6,8 @@ services:
     name: iching-backend
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt && mkdir -p divination/core divination/models divination/data
-    startCommand: |
-      ls -la divination &&
-      cp main.py divination/ &&
-      cp -r core divination/ &&
-      cp -r models divination/ &&
-      cp -r data divination/ &&
-      cd divination &&
-      ls -la &&
-      python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r divination/requirements.txt
+    startCommand: cd divination && python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.13.0"
