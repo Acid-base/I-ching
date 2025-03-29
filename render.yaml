@@ -6,14 +6,15 @@ services:
     name: iching-backend
     runtime: python
     plan: free
-    buildCommand: pip install fastapi uvicorn pydantic python-dotenv typing-extensions argparse gunicorn
+    buildCommand: pip install -r requirements.txt && mkdir -p divination/core divination/models divination/data
     startCommand: |
+      ls -la divination &&
+      cp main.py divination/ &&
+      cp -r core divination/ &&
+      cp -r models divination/ &&
+      cp -r data divination/ &&
       cd divination &&
-      echo "Current directory contents:" && ls -la &&
-      echo "Python executable:" && which python &&
-      echo "Python version:" && python --version &&
-      echo "PYTHONPATH:" && echo $PYTHONPATH &&
-      echo "Python module search paths:" && python -c "import sys; print(sys.path)" &&
+      ls -la &&
       python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
