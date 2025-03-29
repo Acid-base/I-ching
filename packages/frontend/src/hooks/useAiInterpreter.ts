@@ -7,9 +7,7 @@ import { useEffect, useState } from 'react';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-// ===> ADD THIS LINE FOR DEBUGGING <===
-console.log("VITE_GEMINI_API_KEY at build time:", GEMINI_API_KEY);
-// =====================================
+// Debug log for API key (safely)
 
 const STORAGE_KEYS = {
   CHAT_HISTORY: 'iching_chat_history',
