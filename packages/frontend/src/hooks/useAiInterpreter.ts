@@ -85,7 +85,6 @@ export function useAiInterpreter(): UseAiInterpreterResult {
 
   // Reset chat when component mounts
   useEffect(() => {
-    console.log('useAiInterpreter mounted');
     setChatHistory([]);
   }, []);
 
@@ -100,13 +99,11 @@ export function useAiInterpreter(): UseAiInterpreterResult {
   useEffect(() => {
     if (currentReading) {
       // Save regardless of structure - don't check for data.hexagram_number
-      console.log('Saving current reading to localStorage');
       localStorage.setItem(STORAGE_KEYS.CURRENT_READING, JSON.stringify(currentReading));
     }
   }, [currentReading]);
 
   const getInterpretation = async (reading: ReadingResponse) => {
-    console.log('Getting interpretation for reading:', reading);
     setIsLoading(true);
     setError(null);
 
@@ -118,7 +115,6 @@ export function useAiInterpreter(): UseAiInterpreterResult {
       if (!GEMINI_API_KEY || !model) {
         const basicInterpretation = `Hexagram ${reading.data.hexagram_number}: ${reading.data.reading.name || 'Unknown'}`;
         setInterpretation(basicInterpretation);
-        console.log('No GEMINI_API_KEY found. Using basic interpretation.');
         return;
       }
 
@@ -137,12 +133,10 @@ export function useAiInterpreter(): UseAiInterpreterResult {
       4. Practical advice based on this reading
       `;
 
-      console.log('Sending prompt to Gemini');
       // Generate content using Gemini
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const aiInterpretation = response.text();
-      console.log('Received AI interpretation');
       setInterpretation(aiInterpretation);
     } catch (e) {
       console.error('Error in getInterpretation:', e);
@@ -153,7 +147,6 @@ export function useAiInterpreter(): UseAiInterpreterResult {
   };
 
   const getEnhancedInterpretation = async (hexagramNumber: number) => {
-    console.log('Getting enhanced interpretation for hexagram:', hexagramNumber);
     setIsEnhancedLoading(true);
 
     try {
@@ -186,18 +179,15 @@ export function useAiInterpreter(): UseAiInterpreterResult {
   };
 
   const startAiChat = async (providedReading?: any) => {
-    console.log('Starting AI chat');
     // Use the provided reading if available, otherwise check localStorage
     let readingToUse = providedReading;
     if (!readingToUse) {
-      console.log('No reading provided to startChat, checking state and localStorage...');
       // If no reading was provided, try to use the one in state
       readingToUse = currentReading;
       // If still no reading, check localStorage
       if (!readingToUse) {
         try {
           const savedReadingStr = localStorage.getItem(STORAGE_KEYS.CURRENT_READING);
-          console.log('Reading from localStorage when starting chat:', savedReadingStr);
           if (savedReadingStr) {
             const parsedReading = JSON.parse(savedReadingStr);
             // Verify the parsed data has the expected structure
@@ -211,7 +201,6 @@ export function useAiInterpreter(): UseAiInterpreterResult {
         }
       }
     } else {
-      console.log('Reading provided to startChat:', providedReading);
       // Update currentReading state with the provided reading
       setCurrentReading(providedReading as any);
     }
@@ -249,7 +238,6 @@ export function useAiInterpreter(): UseAiInterpreterResult {
     }
 
     try {
-      console.log('Using reading for chat:', hexagramNumber);
       // Set up the chat with the available reading
       setChatHistory([
         {
@@ -265,7 +253,6 @@ export function useAiInterpreter(): UseAiInterpreterResult {
   };
 
   const sendMessage = async (content: string) => {
-    console.log('Sending message:', content);
     // First add the user message to chat history
     setChatHistory((prev) => [...prev, { role: 'user', content }]);
 
@@ -353,7 +340,6 @@ READING INFORMATION:
 USER QUESTION: ${content}
 `;
 
-      console.log('Sending message to Gemini with reading context');
       // Create a simple chat with only the current exchange
       const result = await model.generateContent(userMessageWithContext);
       const response = await result.response;
@@ -376,7 +362,6 @@ USER QUESTION: ${content}
   const clearChat = () => {
     setChatHistory([]);
     setIsChatEnabled(false);
-    console.log('Chat cleared');
   };
 
   return {
