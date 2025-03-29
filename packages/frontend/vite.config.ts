@@ -38,7 +38,7 @@ export default defineConfig({
   // Preview server configuration
   preview: {
     port: parseInt(process.env.PORT || '4173'),
-    host: true, // Listen on all addresses
+    host: true,
     allowedHosts: ['iching-frontend.onrender.com', '.onrender.com'],
   },
 });

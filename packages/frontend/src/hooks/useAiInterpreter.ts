@@ -1,10 +1,16 @@
 import { type ReadingResponse } from '@/types';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import console from 'console';
 import { useEffect, useState } from 'react';
 
 // Constants
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+// ===> ADD THIS LINE FOR DEBUGGING <===
+console.log("VITE_GEMINI_API_KEY at build time:", GEMINI_API_KEY);
+// =====================================
+
 const STORAGE_KEYS = {
   CHAT_HISTORY: 'iching_chat_history',
   INTERPRETATIONS: 'iching_interpretations',
@@ -56,7 +62,7 @@ interface UseAiInterpreterResult {
 }
 
 export function useAiInterpreter(): UseAiInterpreterResult {
-  const [interpretation, setInterpretation] = useState<string | null>(null);
+  const [interpretation, setInterpretation = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isEnhancedLoading, setIsEnhancedLoading] = useState(false);
@@ -324,7 +330,7 @@ export function useAiInterpreter(): UseAiInterpreterResult {
       const changingLines = hasDataProperty ? readingToUse.data.changing_lines : (readingToUse as any).changing_lines;
       const relatingHexagram = hasDataProperty
         ? readingToUse.data.relating_hexagram
-        : (readingToUse as any).relating_hexagram;
+        : (readingToUse as any).relatingHexagram;
 
       if (!hexagramNumber || !hexagramName) {
         console.error('Reading is missing hexagram number or name');
