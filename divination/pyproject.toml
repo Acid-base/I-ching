@@ -1,0 +1,66 @@
+[tool.poetry]
+name = "i-ching"
+version = "0.1.0"
+description = "I-Ching divination system"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+license = "MIT"
+package-mode = false 
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+fastapi = "^0.109.2"
+uvicorn = "^0.27.0"
+pydantic = "^2.5.3"
+python-dotenv = "^1.0.1"
+typing-extensions = "^4.9.0"
+argparse = "^1.4.0"
+gunicorn = "^23.0.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.15"
+pre-commit = "^3.6.0"
+pytest = "^8.0.0"
+pytest-cov = "^4.1.0"
+httpx = "^0.26.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+lint.select = ["E", "F", "I", "N", "B", "W", "D"]
+lint.ignore = []
+exclude = [
+  ".git",
+  ".env",
+  ".venv",
+  "venv",
+  "env",
+  "dist",
+  "__pycache__",
+  ".eggs",
+  "*.egg",
+]
+line-length = 88
+indent-width = 4
+target-version = "py311"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["."]
+omit = ["*/__pycache__/*", "*/tests/*"]
