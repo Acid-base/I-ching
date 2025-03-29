@@ -6,7 +6,7 @@ services:
     name: iching-backend
     runtime: python
     plan: free
-    buildCommand: ls -la && ls -la divination && cat divination/requirements.txt && pip install -r requirements.txt
+    buildCommand: pip install fastapi uvicorn pydantic python-dotenv typing-extensions argparse gunicorn
     startCommand: |
       cd divination &&
       echo "Current directory contents:" && ls -la &&
