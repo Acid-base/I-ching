@@ -6,7 +6,7 @@ services:
     name: iching-backend
     runtime: python
     plan: free
-    buildCommand: ls -la && echo "Root contents" && cd divination && ls -la && pip install -r ./requirements.txt
+    buildCommand: ls -la && ls -la divination && cat divination/requirements.txt && pip install -r requirements.txt
     startCommand: |
       cd divination &&
       echo "Current directory contents:" && ls -la &&
