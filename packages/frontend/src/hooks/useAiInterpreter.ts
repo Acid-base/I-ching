@@ -62,7 +62,7 @@ interface UseAiInterpreterResult {
 }
 
 export function useAiInterpreter(): UseAiInterpreterResult {
-  const [interpretation, setInterpretation = useState<string | null>(null);
+  const [interpretation, setInterpretation] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isEnhancedLoading, setIsEnhancedLoading] = useState(false);

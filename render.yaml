@@ -24,4 +24,5 @@ services:
         value: "10000"
       - key: VITE_API_URL
         value: "https://iching-backend.onrender.com"
-      # DO NOT add VITE_GEMINI_API_KEY here if using the Dashboard method
+      - key: VITE_GEMINI_API_KEY
+        sync: false  # This indicates it should be set manually in the dashboard
