@@ -1,11 +1,13 @@
-import { type ReadingResponse } from '@/types';
+import { HexagramMode, type ReadingResponse } from '@/types';
 import { generateReading } from '@services/api';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { useCallback, useMemo, useState } from 'react';
-import { hexagramService } from '../services/hexagramService';
+import { useState, useCallback } from 'react';
 
-// Define a consistent type that matches the actual API response structure
+// Configure axios defaults
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+axios.defaults.timeout = 10000; // 10 seconds timeout
+
 type HexagramState = ReadingResponse | null;
 
 interface UseHexagramResult {
@@ -17,54 +19,31 @@ interface UseHexagramResult {
   isInterpreting: boolean;
   getInterpretation: (readingData?: ReadingResponse) => Promise<void>;
   clearReading: () => void;
-  setMode?: (mode: 'yarrow' | 'coin') => void;
+  mode: HexagramMode;
+  setMode: (mode: HexagramMode) => void;
 }
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const CACHE_TIME = 1000 * 60 * 60; // 1 hour
 
 export function useHexagram(): UseHexagramResult {
   const [interpretation, setInterpretation] = useState<string | null>(null);
   const [isInterpreting, setIsInterpreting] = useState(false);
   const queryClient = useQueryClient();
-  const [mode, setMode] = useState<'yarrow' | 'coin'>('yarrow');
+  const [mode, setMode] = useState<HexagramMode>(HexagramMode.YARROW);
   const [reading, setReading] = useState<HexagramState>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<Error | null>(null);
 
-  // Memoize the query configuration
-  const queryConfig = useMemo(
-    () => ({
-      queryKey: ['reading', mode],
-      queryFn: () => hexagramService.generateReading(mode),
-      enabled: false,
-      cacheTime: CACHE_TIME,
-      staleTime: CACHE_TIME,
-    }),
-    [mode]
-  );
-
-  const generate = async (): Promise<any> => {
-    console.log('Generating reading...');
-    setIsGenerating(true);
-    setGenerateError(null);
-    try {
-      console.log('Calling generateReading API...');
-      const response = await generateReading('yarrow');
-      console.log('API response received:', response);
-      // Use type assertion to ensure TypeScript understands the structure
-      setReading(response as any);
-      return response;
-    } catch (error) {
-      console.error('Error generating reading:', error);
+  const mutation = useMutation({
+    mutationFn: () => generateReading(mode),
+    onSuccess: (data) => {
+      setReading(data);
+    },
+    onError: (error) => {
+      console.error('Failed to generate reading:', error);
       setGenerateError(error instanceof Error ? error : new Error('Failed to generate reading'));
-      throw error;
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+    },
+  });
 
-  // Memoize interpretation function
+  // Get interpretation for a reading
   const getInterpretation = useCallback(
     async (readingData?: ReadingResponse) => {
       const dataToUse = readingData || reading;
@@ -74,9 +53,7 @@ export function useHexagram(): UseHexagramResult {
       try {
         setIsInterpreting(true);
 
-        // Safely access properties using type guards to handle both possible structures
         const hexagramNumber = dataToUse.data?.hexagram_number || (dataToUse as any).hexagram_number;
-
         const readingObj = dataToUse.data?.reading || (dataToUse as any).reading;
 
         if (!hexagramNumber) {
@@ -114,16 +91,19 @@ export function useHexagram(): UseHexagramResult {
   const clearReading = useCallback(() => {
     queryClient.removeQueries({ queryKey: ['reading'] });
     setInterpretation(null);
+    setReading(null);
   }, [queryClient]);
 
   return {
     reading,
-    isGenerating,
-    generateError: generateError ? new Error(generateError.message) : null,
-    generate,
+    isGenerating: mutation.isPending,
+    generateError: generateError,
+    generate: () => mutation.mutate(),
     interpretation,
     isInterpreting,
     getInterpretation,
     clearReading,
+    mode,
+    setMode,
   };
 }

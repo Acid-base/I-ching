@@ -23,6 +23,7 @@ export function useReading() {
     isLoading: mutation.isPending,
     error: mutation.error,
     generate: () => mutation.mutate(),
+    mode,
     setMode,
   };
 }

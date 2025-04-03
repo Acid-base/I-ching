@@ -1,79 +1,80 @@
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# OS specific files
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Build output
-dist/
-build/
-*.egg-info/
-
-# IDE
-.idea/
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
-*.sublime-project
-*.sublime-workspace
-
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment and IDE
+.env
+.venv
 env/
 venv/
-.env/
-.venv/
 ENV/
-.pytest_cache/
+env.bak/
+venv.bak/
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# React/Node.js
+node_modules/
+coverage/
+.npm
+.yarn
+.pnp.*
+.next
+.nuxt
+.cache/
+.parcel-cache/
+.output
+.temp
+*.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Test reports
 .coverage
 htmlcov/
 .tox/
 .nox/
 .hypothesis/
-.cache
+.pytest_cache/
 nosetests.xml
 coverage.xml
 *.cover
 
-# Node/JavaScript
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-.turbo
-.next
-.nuxt
-.cache/
-.parcel-cache
+# Build files
+dist/
+build/
+out/
+.vercel
+.netlify
 
-# Testing
-coverage/
-.nyc_output/
-
-# Logs
-logs
-*.log
-
-# Project specific
-.aider*
-api_key.txt
-
-# Render specific
-.render-buildpacks-cache/
-
-# Temporary files
-*.tmp
-*.bak
-*.swp
-*~
+# Local development
+.envrc
+.direnv
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

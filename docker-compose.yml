@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8000:8000'
+    environment:
+      - PORT=8000
+      - CORS_ORIGINS=http://localhost:3000
+    volumes:
+      - ./divination:/app/divination
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./packages/frontend
+    ports:
+      - '3000:3000'
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      - ./packages/frontend/src:/app/src
+    depends_on:
+      - api
+    restart: unless-stopped

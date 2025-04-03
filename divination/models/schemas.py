@@ -1,16 +1,30 @@
 """Pydantic models for I Ching API."""
 
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+
+class DivinationMethod(str, Enum):
+    """Valid divination methods."""
+
+    YARROW = "yarrow"
+    COINS = "coins"
 
 
 class ReadingRequest(BaseModel):
     """Request model for generating a reading."""
 
-    mode: str = "yarrow"
-    seed: Optional[int] = None
-    verbose: bool = False
+    mode: DivinationMethod = Field(
+        default=DivinationMethod.YARROW, description="Divination method to use"
+    )
+    seed: Optional[int] = Field(
+        default=None, description="Optional seed for reproducible readings"
+    )
+    verbose: bool = Field(
+        default=False, description="Whether to include detailed output"
+    )
 
 
 class ReadingResponse(BaseModel):

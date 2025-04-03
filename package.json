@@ -1,5 +1,41 @@
 {
-	"dependencies": {
-		"eslint": "^9.23.0"
-	}
+  "name": "i-ching-divination",
+  "version": "1.0.0",
+  "description": "A full-stack I Ching divination application with authentic yarrow stalk and three-coin methods",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd divination && python -m main",
+    "start:frontend": "cd packages/frontend && npm run dev",
+    "dev": "concurrently \"npm run start\" \"npm run start:frontend\"",
+    "test": "cd divination && pytest",
+    "lint": "eslint packages/frontend/src/**/*.{js,ts,tsx} && cd divination && ruff check ."
+  },
+  "keywords": [
+    "i-ching",
+    "divination",
+    "oracle",
+    "yarrow-stalks",
+    "coins",
+    "hexagrams",
+    "fastapi",
+    "react",
+    "python",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/I-ching.git"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "eslint": "^9.23.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
 }

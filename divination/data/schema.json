@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "I Ching Hexagram Data",
+  "description": "Schema for the structure of I Ching hexagram data.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "number": {
+        "description": "The unique number of the hexagram (1-64).",
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 64
+      },
+      "name": {
+        "description": "The common English name and theme of the hexagram.",
+        "type": "string"
+      },
+      "chineseName": {
+        "description": "The Chinese character representing the hexagram.",
+        "type": "string"
+      },
+      "judgment": {
+        "description": "The overall judgment or core meaning of the hexagram.",
+        "type": "string"
+      },
+      "image": {
+        "description": "The symbolic imagery associated with the hexagram and its interpretation.",
+        "type": "string"
+      },
+      "lines": {
+        "description": "An array detailing the meaning of each of the six lines.",
+        "type": "array",
+        "minItems": 6,
+        "maxItems": 6,
+        "items": {
+          "type": "object",
+          "properties": {
+            "lineNumber": {
+              "description": "The line number (1-6).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6
+            },
+            "type": {
+              "description": "The type of the line (yin or yang).",
+              "type": "string",
+              "enum": ["yin", "yang"]
+            },
+            "meaning": {
+              "description": "The specific meaning or interpretation of this line.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "lineNumber",
+            "type",
+            "meaning"
+          ]
+        }
+      },
+      "upperTrigram": {
+        "description": "The name of the upper trigram.",
+        "type": "string"
+      },
+      "lowerTrigram": {
+        "description": "The name of the lower trigram.",
+        "type": "string"
+      },
+      "trigramSignificance": {
+        "description": "Details about the symbolism and relationship of the constituent trigrams.",
+        "type": "object",
+        "properties": {
+          "upper": {
+            "description": "The symbolic meaning of the upper trigram.",
+            "type": "string"
+          },
+          "lower": {
+            "description": "The symbolic meaning of the lower trigram.",
+            "type": "string"
+          },
+          "relationship": {
+            "description": "The interpretation arising from the combination or relationship of the two trigrams.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upper",
+          "lower",
+          "relationship"
+         ]
+      },
+      "commentary": {
+        "description": "Additional commentary or explanations about the hexagram.",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "number",
+      "name",
+      "chineseName",
+      "judgment",
+      "image",
+      "lines",
+      "upperTrigram",
+      "lowerTrigram",
+      "trigramSignificance",
+      "commentary"
+    ]
+  }
+}

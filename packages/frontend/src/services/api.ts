@@ -1,5 +1,4 @@
-// Import directly from the hexagram type file instead of the barrel file
-import type { ReadingResponse as APIReadingResponse } from '@/types/hexagram';
+import { HexagramMode, type ReadingResponse } from '@/types';
 import axios from 'axios';
 
 // Define ChatResponse type locally since it's missing from @/types
@@ -21,13 +20,17 @@ const api = axios.create({
 
 // Consolidate all API functions
 export const apiService = {
-  generateReading: async (mode: 'yarrow' | 'coin'): Promise<APIReadingResponse> => {
-    const { data } = await api.post('/cast', {
-      mode,
-      seed: null,
-      verbose: false,
-    });
-    return data;
+  generateReading: async (mode: HexagramMode): Promise<ReadingResponse> => {
+    try {
+      const response = await axios.post(`${API_URL}/cast`, {
+        mode: mode,
+        verbose: false,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error generating reading:', error);
+      throw error;
+    }
   },
 
   getHexagram: async (id: number) => {

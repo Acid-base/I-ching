@@ -64,7 +64,7 @@ export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 // Add additional types needed by other files
 export enum HexagramMode {
   YARROW = 'yarrow',
-  COIN = 'coin',
+  COINS = 'coins'  // Changed from COIN to COINS to match backend
 }
 
 // Export Reading schema for those files that import it

@@ -1,6 +1,6 @@
-from collections import Counter
 import os
 import sys
+from collections import Counter
 
 import numpy as np
 
@@ -49,13 +49,20 @@ def test_yarrow_stalk_probabilities():
         actual_prob = actual_probabilities[line]
         diff = actual_prob - expected_prob
         line_name = ["Old Yin", "Young Yang", "Young Yin", "Old Yang"][line - 6]
-        print(f"{line} ({line_name}):  {expected_prob:.6f}   {actual_prob:.6f}   {diff:+.6f}")
+        print(
+            f"{line} ({line_name}):  {expected_prob:.6f}   {actual_prob:.6f}   {diff:+.6f}"
+        )
 
     # Statistical test - Chi-squared goodness of fit
-    observed_counts = np.array([counts[line] for line in sorted(EXPECTED_PROBABILITIES.keys())])
-    expected_counts = np.array([
-        EXPECTED_PROBABILITIES[line] * NUM_TRIALS for line in sorted(EXPECTED_PROBABILITIES.keys())
-    ])
+    observed_counts = np.array(
+        [counts[line] for line in sorted(EXPECTED_PROBABILITIES.keys())]
+    )
+    expected_counts = np.array(
+        [
+            EXPECTED_PROBABILITIES[line] * NUM_TRIALS
+            for line in sorted(EXPECTED_PROBABILITIES.keys())
+        ]
+    )
 
     chi2 = np.sum((observed_counts - expected_counts) ** 2 / expected_counts)
     df = len(EXPECTED_PROBABILITIES) - 1  # degrees of freedom
@@ -93,7 +100,9 @@ def test_multiple_seeds():
         overall_counts.update(lines)
 
     total_trials = NUM_SEEDS * TRIALS_PER_SEED
-    actual_probabilities = {line: count / total_trials for line, count in overall_counts.items()}
+    actual_probabilities = {
+        line: count / total_trials for line, count in overall_counts.items()
+    }
 
     # Print results
     print("\nMultiple Seeds Probability Test:")
@@ -109,7 +118,9 @@ def test_multiple_seeds():
         actual_prob = actual_probabilities[line]
         diff = actual_prob - expected_prob
         line_name = ["Old Yin", "Young Yang", "Young Yin", "Old Yang"][line - 6]
-        print(f"{line} ({line_name}):  {expected_prob:.6f}   {actual_prob:.6f}   {diff:+.6f}")
+        print(
+            f"{line} ({line_name}):  {expected_prob:.6f}   {actual_prob:.6f}   {diff:+.6f}"
+        )
 
     # Assert probabilities across all seeds
     for line, expected_prob in EXPECTED_PROBABILITIES.items():
@@ -124,7 +135,10 @@ def test_sequence_independence():
     yarrow = YarrowStalks(seed=42)
 
     # Generate pairs of consecutive lines
-    pairs = [(yarrow.generate_single_line_value(), yarrow.generate_single_line_value()) for _ in range(NUM_PAIRS)]
+    pairs = [
+        (yarrow.generate_single_line_value(), yarrow.generate_single_line_value())
+        for _ in range(NUM_PAIRS)
+    ]
 
     # Count transitions between line values
     transitions = {}
@@ -148,12 +162,17 @@ def test_sequence_independence():
         total = sum(transitions[first].values())
         probs = [transitions[first].get(second, 0) / total for second in [6, 7, 8, 9]]
         first_name = ["Old Yin", "Young Yang", "Young Yin", "Old Yang"][first - 6]
-        print(f"{first} ({first_name}) | {probs[0]:.6f}    | {probs[1]:.6f}      | {probs[2]:.6f}     | {probs[3]:.6f}")
+        print(
+            f"{first} ({first_name}) | {probs[0]:.6f}    | {probs[1]:.6f}      | {probs[2]:.6f}     | {probs[3]:.6f}"
+        )
 
     # Check that second line probabilities are independent of first line
     for first_line in transitions:
         total_after_first = sum(transitions[first_line].values())
-        second_probs = {line: count / total_after_first for line, count in transitions[first_line].items()}
+        second_probs = {
+            line: count / total_after_first
+            for line, count in transitions[first_line].items()
+        }
 
         # Verify each second line probability is close to expected
         for line, expected_prob in expected.items():
