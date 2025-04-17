@@ -1,12 +1,17 @@
+"""Test the probability distributions of the I Ching divination methods."""
+
 import os
 import sys
 from collections import Counter
 
 import numpy as np
 
-# Add the current directory to the path so we can import the yarrow module
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from yarrow import YarrowStalks
+# Fix import by adding proper path and using direct import from module
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from core.yarrow import generate_line as yarrow_generate_line
+
+# Sample size for probability tests
+SAMPLE_SIZE = 10000
 
 
 def test_yarrow_stalk_probabilities():
@@ -25,11 +30,8 @@ def test_yarrow_stalk_probabilities():
         9: 3 / 16,  # Old Yang
     }
 
-    # Use a fixed seed for reproducibility
-    yarrow = YarrowStalks(seed=42)
-
     # Generate many line values
-    line_values = [yarrow.generate_single_line_value() for _ in range(NUM_TRIALS)]
+    line_values = [yarrow_generate_line() for _ in range(NUM_TRIALS)]
 
     # Count occurrences
     counts = Counter(line_values)
@@ -91,8 +93,7 @@ def test_multiple_seeds():
     overall_counts = Counter()
 
     for seed in range(NUM_SEEDS):
-        yarrow = YarrowStalks(seed=seed)
-        lines = [yarrow.generate_single_line_value() for _ in range(TRIALS_PER_SEED)]
+        lines = [yarrow_generate_line(seed=seed) for _ in range(TRIALS_PER_SEED)]
         overall_counts.update(lines)
 
     total_trials = NUM_SEEDS * TRIALS_PER_SEED
@@ -125,13 +126,9 @@ def test_multiple_seeds():
 def test_sequence_independence():
     """Test that consecutive line generations are independent."""
     NUM_PAIRS = 5000
-    yarrow = YarrowStalks(seed=42)
 
     # Generate pairs of consecutive lines
-    pairs = [
-        (yarrow.generate_single_line_value(), yarrow.generate_single_line_value())
-        for _ in range(NUM_PAIRS)
-    ]
+    pairs = [(yarrow_generate_line(), yarrow_generate_line()) for _ in range(NUM_PAIRS)]
 
     # Count transitions between line values
     transitions = {}
@@ -173,10 +170,3 @@ def test_sequence_independence():
                 f"Transition probability from {first_line} to {line} "
                 f"differs by more than 2 percentage points"
             )
-
-
-if __name__ == "__main__":
-    # Run with pytest -xvs test_probability.py
-    test_yarrow_stalk_probabilities()
-    test_multiple_seeds()
-    test_sequence_independence()

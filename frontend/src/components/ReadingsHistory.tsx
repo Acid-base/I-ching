@@ -1,33 +1,35 @@
 import {
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogOverlay,
-    Box,
-    Button,
-    Divider,
-    Flex,
-    Heading,
-    IconButton,
-    Text,
-    Tooltip,
-    useColorModeValue,
-    useDisclosure,
-    VStack
-} from '@chakra-ui/react';
-import { useEffect, useState, useRef } from 'react';
-import { FaEye, FaTrash } from 'react-icons/fa';
-import { ReadingResponse } from '../types/reading';
-import { formatDate } from '../utils/dateUtils';
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  Box,
+  Button,
+  Divider,
+  Flex,
+  Heading,
+  IconButton,
+  Text,
+  Tooltip,
+  useColorModeValue,
+  useDisclosure,
+  VStack,
+} from "@chakra-ui/react";
+import { useEffect, useRef, useState } from "react";
+import { FaEye, FaTrash } from "react-icons/fa";
+import { ReadingResponse } from "../services/hexagramService";
+import { formatDate } from "../utils/dateUtils";
 
-// Key for storing readings in localStorage
-const STORAGE_KEY = 'iching_saved_readings';
+// Key for storing readings in localStorage - Use a consistent key
+// Define this in a constants file ideally, e.g., src/constants.ts
+const SAVED_READINGS_KEY = "iching_saved_readings"; // Use the same key as useReading/useHexagram
 
+// Interface for saved reading structure in localStorage
 interface SavedReading {
   timestamp: number;
-  reading: ReadingResponse;
+  reading: ReadingResponse; // Ensure this matches the stored structure
 }
 
 interface ReadingsHistoryProps {
@@ -35,28 +37,31 @@ interface ReadingsHistoryProps {
   onClose: () => void;
 }
 
-export function ReadingsHistory({ onViewReading, onClose }: ReadingsHistoryProps) {
+export function ReadingsHistory({
+  onViewReading,
+  onClose,
+}: ReadingsHistoryProps) {
   const [savedReadings, setSavedReadings] = useState<SavedReading[]>([]);
   const [readingToDelete, setReadingToDelete] = useState<number | null>(null);
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
   const { isOpen, onOpen, onClose: onAlertClose } = useDisclosure();
+  const bgColor = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
 
-  // Load saved readings from localStorage
+  // Load saved readings from localStorage on mount
   useEffect(() => {
     const loadSavedReadings = () => {
       try {
-        const savedData = localStorage.getItem(STORAGE_KEY);
-        if (savedData) {
-          const parsedData = JSON.parse(savedData);
-          // Sort readings by timestamp (newest first)
-          const sortedReadings = parsedData.sort((a: SavedReading, b: SavedReading) =>
-            b.timestamp - a.timestamp
-          );
-          setSavedReadings(sortedReadings);
+        const savedReadingsJson = localStorage.getItem(SAVED_READINGS_KEY);
+        if (savedReadingsJson) {
+          const parsedReadings = JSON.parse(
+            savedReadingsJson,
+          ) as SavedReading[];
+          // TODO: Add validation for each reading structure if necessary
+          setSavedReadings(parsedReadings);
         }
       } catch (error) {
-        console.error('Failed to load saved readings:', error);
+        console.error("Failed to load saved readings:", error);
+        localStorage.removeItem(SAVED_READINGS_KEY); // Clear potentially corrupted data
       }
     };
 
@@ -66,49 +71,53 @@ export function ReadingsHistory({ onViewReading, onClose }: ReadingsHistoryProps
   // Handle viewing a reading
   const handleViewReading = (reading: ReadingResponse) => {
     onViewReading(reading);
-    onClose();
+    onClose(); // Close the history modal
   };
 
   // Confirm deletion dialog
   const confirmDelete = (index: number) => {
     setReadingToDelete(index);
-    onOpen();
+    onOpen(); // Open the alert dialog
   };
 
   // Handle deleting a reading
   const handleDeleteReading = () => {
     if (readingToDelete !== null) {
-      const updatedReadings = [...savedReadings];
-      updatedReadings.splice(readingToDelete, 1);
+      const updatedReadings = savedReadings.filter(
+        (_, index) => index !== readingToDelete,
+      );
       setSavedReadings(updatedReadings);
 
       // Update localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedReadings));
-      setReadingToDelete(null);
-      onAlertClose();
+      localStorage.setItem(SAVED_READINGS_KEY, JSON.stringify(updatedReadings));
+      setReadingToDelete(null); // Reset delete index
+      onAlertClose(); // Close the alert dialog
     }
   };
 
   // Format the hexagram information for display
   const getReadingDisplayInfo = (reading: ReadingResponse) => {
-    if (!reading) return { title: 'Unknown', subtitle: '' };
+    let title = "Unknown Reading";
+    let subtitle = "";
 
-    let title = 'Hexagram';
-    let subtitle = '';
+    // Access data from the nested structure
+    const primary = reading.reading; // Corresponds to primary_hexagram
+    const transformed = reading.relating_hexagram; // Corresponds to transformed_hexagram
 
-    if (reading.hexagram && reading.hexagram.number) {
-      title = `Hexagram ${reading.hexagram.number}`;
-      if (reading.hexagram.name) {
-        title += `: ${reading.hexagram.name}`;
+    if (primary) {
+      title = `Hexagram ${primary.number}`;
+      if (primary.name) {
+        title += `: ${primary.name}`;
       }
-    } else if (reading.primary_hexagram) {
-      title = `Hexagram ${reading.primary_hexagram.number}`;
-      if (reading.primary_hexagram.name) {
-        title += `: ${reading.primary_hexagram.name}`;
+      if (transformed) {
+        subtitle = `Changing to Hexagram ${transformed.number}`;
+        if (transformed.name) {
+          subtitle += `: ${transformed.name}`;
+        }
       }
-      if (reading.related_hexagram) {
-        subtitle = `Changing to Hexagram ${reading.related_hexagram.number}: ${reading.related_hexagram.name || ''}`;
-      }
+    } else if (reading.hexagram_number) {
+      // Fallback for potentially older/flattened structures if needed
+      title = `Hexagram ${reading.hexagram_number}`;
     }
 
     return { title, subtitle };
@@ -121,69 +130,86 @@ export function ReadingsHistory({ onViewReading, onClose }: ReadingsHistoryProps
       p={5}
       bg={bgColor}
       borderColor={borderColor}
-      maxHeight="70vh"
-      overflowY="auto"
-      width="100%"
+      maxHeight="80vh" // Limit height
+      display="flex"
+      flexDirection="column"
     >
-      <Heading size="md" mb={4}>Saved Readings</Heading>
-      {savedReadings.length === 0 ? (
-        <Text color="gray.500" py={4} textAlign="center">
-          No saved readings found. Readings will be automatically saved when generated.
-        </Text>
-      ) : (
-        <VStack spacing={4} align="stretch">
-          {savedReadings.map((item, index) => {
-            const { title, subtitle } = getReadingDisplayInfo(item.reading);
-            return (
-              <Box
-                key={index}
-                borderWidth="1px"
-                borderRadius="md"
-                p={3}
-                borderColor={borderColor}
-              >
-                <Flex justifyContent="space-between" alignItems="center">
-                  <VStack align="start" spacing={1}>
-                    <Text fontWeight="bold">{title}</Text>
-                    {subtitle && <Text fontSize="sm" color="gray.500">{subtitle}</Text>}
-                    <Text fontSize="xs" color="gray.500">
-                      {formatDate(new Date(item.timestamp))}
-                    </Text>
-                  </VStack>
-                  <Flex>
-                    <Tooltip label="View reading">
-                      <IconButton
-                        aria-label="View reading"
-                        icon={<FaEye />}
-                        size="sm"
-                        mr={2}
-                        onClick={() => handleViewReading(item.reading)}
-                      />
-                    </Tooltip>
-                    <Tooltip label="Delete">
-                      <IconButton
-                        aria-label="Delete reading"
-                        icon={<FaTrash />}
-                        size="sm"
-                        colorScheme="red"
-                        variant="outline"
-                        onClick={() => confirmDelete(index)}
-                      />
-                    </Tooltip>
+      <Heading size="md" mb={4} flexShrink={0}>
+        Saved Readings
+      </Heading>
+      <Box flexGrow={1} overflowY="auto" pr={2}>
+        {" "}
+        {/* Scrollable area */}
+        {savedReadings.length === 0 ? (
+          <Text color="gray.500" py={4} textAlign="center">
+            No saved readings found. Readings will be automatically saved when
+            generated.
+          </Text>
+        ) : (
+          <VStack spacing={4} align="stretch">
+            {savedReadings.map((item, index) => {
+              // Validate item.reading structure before accessing
+              if (!item.reading) return null;
+              const { title, subtitle } = getReadingDisplayInfo(item.reading);
+              return (
+                <Box
+                  key={item.timestamp || index} // Use timestamp if available
+                  borderWidth="1px"
+                  borderRadius="md"
+                  p={3}
+                  borderColor={borderColor}
+                >
+                  <Flex justifyContent="space-between" alignItems="center">
+                    <VStack align="start" spacing={1} flexGrow={1} mr={2}>
+                      <Text fontWeight="bold" noOfLines={1}>
+                        {title}
+                      </Text>
+                      {subtitle && (
+                        <Text fontSize="sm" color="gray.500" noOfLines={1}>
+                          {subtitle}
+                        </Text>
+                      )}
+                      <Text fontSize="xs" color="gray.500">
+                        {formatDate(new Date(item.timestamp))}
+                      </Text>
+                    </VStack>
+                    <Flex flexShrink={0}>
+                      <Tooltip label="View reading">
+                        <IconButton
+                          aria-label="View reading"
+                          icon={<FaEye />}
+                          size="sm"
+                          mr={2}
+                          onClick={() => handleViewReading(item.reading)}
+                        />
+                      </Tooltip>
+                      <Tooltip label="Delete reading">
+                        <IconButton
+                          aria-label="Delete reading"
+                          icon={<FaTrash />}
+                          size="sm"
+                          colorScheme="red"
+                          variant="outline"
+                          onClick={() => confirmDelete(index)}
+                        />
+                      </Tooltip>
+                    </Flex>
                   </Flex>
-                </Flex>
-              </Box>
-            );
-          })}
-        </VStack>
-      )}
-      <Divider my={4} />
-      <Button width="100%" onClick={onClose}>Close</Button>
+                </Box>
+              );
+            })}
+          </VStack>
+        )}
+      </Box>
+      <Divider my={4} flexShrink={0} />
+      <Button width="100%" onClick={onClose} flexShrink={0}>
+        Close
+      </Button>
 
       {/* Delete confirmation dialog */}
       <AlertDialog
         isOpen={isOpen}
-        leastDestructiveRef={undefined}
+        leastDestructiveRef={useRef(null)} // Assign a ref
         onClose={onAlertClose}
       >
         <AlertDialogOverlay>
@@ -193,11 +219,12 @@ export function ReadingsHistory({ onViewReading, onClose }: ReadingsHistoryProps
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              Are you sure you want to delete this reading? This action cannot be undone.
+              Are you sure you want to delete this reading? This action cannot
+              be undone.
             </AlertDialogBody>
 
             <AlertDialogFooter>
-              <Button onClick={onAlertClose}>
+              <Button ref={useRef(null)} onClick={onAlertClose}>
                 Cancel
               </Button>
               <Button colorScheme="red" onClick={handleDeleteReading} ml={3}>

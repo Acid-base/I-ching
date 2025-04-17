@@ -1,11 +1,16 @@
 """Core implementation of the I Ching three coins divination method."""
 
-import json
 import os
 import random
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional
 
-from . import yarrow
+# Import required functions from yarrow.py
+from .yarrow import (
+    get_changing_line_indices,
+    get_hexagram_number,
+    load_hexagram_data,
+    transform_lines,
+)
 
 # Type aliases for better code readability
 HexagramLines = List[int]
@@ -18,6 +23,7 @@ ReadingResult = Dict[str, Any]
 # Constants
 DEFAULT_JSON_PATH: str = os.path.join(os.path.dirname(__file__), "..", "data", "hexagrams.json")
 
+
 def toss_three_coins(seed: Optional[int] = None) -> int:
     """Generate a single line value using three coins."""
     try:
@@ -28,7 +34,7 @@ def toss_three_coins(seed: Optional[int] = None) -> int:
         total = sum(coins)
 
         # Map totals to line values
-        value_map = {6: 6, 7: 8, 8: 7, 9: 9}
+        value_map = {6: 8, 7: 7, 8: 9, 9: 6}
         return value_map[total]
     except Exception as e:
         raise ValueError(f"Error in toss_three_coins: {str(e)}") from e
@@ -100,10 +106,10 @@ def get_reading(
             "primary_hexagram": hexagram_data[primary_number],
         }
 
+        # Fix line 113: Convert the hexagram number to int
         if changing_lines:
-            result["transformed_hexagram"] = hexagram_data[
-                cast_result["transformed_hexagram_number"]
-            ]
+            transformed_number = int(cast_result["transformed_hexagram_number"])
+            result["transformed_hexagram"] = hexagram_data[transformed_number]
 
         return result
 

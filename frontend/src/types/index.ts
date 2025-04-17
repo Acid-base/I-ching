@@ -1,16 +1,40 @@
 // Export all types from individual files
-export * from './hexagram';
-export * from './reading';
+export * from "./hexagram";
+export * from "./reading";
 
-// Add the isValidDivinationMethod function that was referenced in hexagramService.ts
-export const HexagramMode = {
-  YARROW: 'yarrow',
-  COINS: 'coins',
-  COIN: 'coin', // For backward compatibility
-} as const;
+// Types for I Ching application
 
-export type HexagramMode = (typeof HexagramMode)[keyof typeof HexagramMode];
+// Valid hexagram divination methods
+export type HexagramMode = "yarrow" | "coins";
 
-export const isValidDivinationMethod = (mode: string): mode is HexagramMode => {
-  return Object.values(HexagramMode).includes(mode as HexagramMode);
-};
+// Environment configuration
+export interface EnvConfig {
+  API_BASE_URL: string;
+}
+
+// Line types
+export type LineValue = number; // Changed from string literals to number
+export type LineType = "old_yin" | "old_yang" | "young_yin" | "young_yang";
+
+// Trigram information
+export interface Trigram {
+  name: string;
+  value: number;
+  symbol?: string;
+  properties?: string[];
+}
+
+// Line information with position and meaning
+export interface LineInfo {
+  position: number;
+  value: LineValue; // Now expects a number
+  type: LineType;
+  isChanging: boolean;
+  meaning?: string;
+}
+
+// Error response from API
+export interface ApiError {
+  detail: string;
+  status?: number;
+}

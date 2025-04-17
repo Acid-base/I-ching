@@ -1,0 +1,20 @@
+{
+  "name": "i-ching",
+  "private": true,
+  "version": "1.0.0",
+  "description": "I Ching Oracle with FastAPI backend and React frontend",
+  "scripts": {
+    "dev:frontend": "cd frontend && pnpm run dev",
+    "dev:backend": "cd backend && python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+    "dev": "concurrently \"pnpm run dev:backend\" \"pnpm run dev:frontend\"",
+    "setup": "pnpm install && cd frontend && pnpm install",
+    "build": "cd frontend && pnpm run build",
+    "preview": "cd frontend && pnpm run preview"
+  },
+  "workspaces": [
+    "frontend"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

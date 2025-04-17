@@ -1,4 +1,3 @@
-import { useMethodSelection } from '@/hooks/useMethodSelection';
 import {
   Accordion,
   AccordionButton,
@@ -23,80 +22,28 @@ import {
   useColorModeValue,
   useToast,
   useToken,
-} from '@chakra-ui/react';
-import { AiInterpretation } from '@components/AiInterpretation';
-import { ChatInterface } from '@components/ChatInterface';
-import { HexagramDisplay } from '@components/HexagramDisplay';
-import { keyframes } from '@emotion/react';
-import { useAiInterpreter } from '@hooks/useAiInterpreter';
-import { useHexagram } from '@hooks/useHexagram';
-import React, { useState } from 'react';
-import { FaBook, FaChartLine, FaCoins, FaComments, FaExchangeAlt, FaLightbulb, FaYinYang } from 'react-icons/fa';
+} from "@chakra-ui/react";
+import { AiInterpretation } from "@components/AiInterpretation";
+import { ChatInterface } from "@components/ChatInterface";
+import { keyframes } from "@emotion/react";
+import { useAiInterpreter } from "@hooks/useAiInterpreter";
+// Import useReading hook for state management
+import { useReading } from "@hooks/useReading";
+import React, { useState } from "react";
+import {
+  FaBook,
+  FaChartLine,
+  FaCoins,
+  FaComments,
+  FaExchangeAlt,
+  FaLightbulb,
+  FaYinYang,
+} from "react-icons/fa";
+import { ReadingResponse } from "./api"; // Import ReadingResponse type
+import { HexagramDisplay } from "./components/HexagramDisplay";
+import { HexagramMode } from "./types"; // Import HexagramMode type
 
-// Local fallback for offline use
-const generateLocalHexagram = (method: 'yarrow' | 'coins') => {
-  // Generate 6 random lines
-  const generateLines = () => {
-    const lines = [];
-    for (let i = 0; i < 6; i++) {
-      // For yarrow method: 6, 7, 8, 9 (with different probabilities)
-      // For coins method: 6, 7, 8, 9 (with equal probabilities)
-      if (method === 'yarrow') {
-        // Approximating yarrow probabilities: 6:25%, 7:31.25%, 8:43.75%, 9:18.75%
-        const rand = Math.random();
-        if (rand < 0.1875) lines.push('9'); // Old Yang
-        else if (rand < 0.50) lines.push('7'); // Young Yang
-        else if (rand < 0.75) lines.push('8'); // Young Yin
-        else lines.push('6'); // Old Yin
-      } else {
-        // Coins method has equal probability for changing/unchanging yin/yang
-        const rand = Math.random();
-        if (rand < 0.25) lines.push('9'); // Old Yang
-        else if (rand < 0.50) lines.push('7'); // Young Yang
-        else if (rand < 0.75) lines.push('8'); // Young Yin
-        else lines.push('6'); // Old Yin
-      }
-    }
-    return lines;
-  };
-
-  // Get the changing lines (6 or 9)
-  const getChangingLines = (lines: string[]) => {
-    return lines.map((line, index) => (line === '6' || line === '9') ? index + 1 : null).filter(Boolean) as number[];
-  };
-
-  // Get hexagram number (simplified for fallback - just use a number between 1-64)
-  const getHexagramNumber = () => {
-    return Math.floor(Math.random() * 64) + 1;
-  };
-
-  const lines = generateLines();
-  const changingLines = getChangingLines(lines);
-  const hexagramNumber = getHexagramNumber();
-
-  // Create a mock reading object that matches the API response structure
-  return {
-    data: {
-      hexagram_number: hexagramNumber,
-      changing_lines: changingLines,
-      lines: lines,
-      reading: {
-        number: hexagramNumber,
-        name: `Hexagram ${hexagramNumber}`,
-        chinese: '易經',
-        judgment: 'This is a locally generated fallback reading. The API appears to be unavailable.',
-        image: 'When the API is unavailable, the wise person creates their own path.',
-        lines: []
-      },
-      relating_hexagram: changingLines.length > 0 ? {
-        number: Math.floor(Math.random() * 64) + 1,
-        name: 'Relating Hexagram',
-        judgment: 'This relating hexagram is simulated as the API is currently unavailable.',
-        image: 'When connections fail, one must find meaning within.',
-      } : undefined
-    }
-  };
-};
+// Removed local fallback generation functions (now in hexagramService.ts)
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -104,7 +51,7 @@ const spin = keyframes`
 `;
 
 const YinYangSpinner = () => {
-  const purple = useToken('colors', 'purple.500');
+  const purple = useToken("colors", "purple.500");
   return (
     <Box
       display="flex"
@@ -124,36 +71,52 @@ interface ProcessStepProps {
 }
 
 const ProcessStep = ({ icon, title, description }: ProcessStepProps) => {
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const bgColor = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
   return (
     <Card bg={bgColor} borderColor={borderColor} borderWidth="1px">
       <CardBody>
         <VStack spacing={3} align="center">
           <Icon as={icon} w={8} h={8} color="purple.500" />
-          <Text fontWeight="bold" fontSize="lg">{title}</Text>
-          <Text color="gray.600" textAlign="center">{description}</Text>
+          <Text fontWeight="bold" fontSize="lg">
+            {title}
+          </Text>
+          <Text color="gray.600" textAlign="center">
+            {description}
+          </Text>
         </VStack>
       </CardBody>
     </Card>
   );
 };
 
-const ComponentItem = ({ icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
+const ComponentItem = ({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+}) => (
   <ListItem>
     <ListIcon as={icon} color="purple.500" />
-    <Text as="span" fontWeight="bold">{title}</Text>
+    <Text as="span" fontWeight="bold">
+      {title}
+    </Text>
     <Text>{description}</Text>
   </ListItem>
 );
 
 const ReadingOverview = () => {
-  const bgColor = useColorModeValue('gray.50', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const bgColor = useColorModeValue("gray.50", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
 
   return (
     <VStack spacing={6} w="full">
-      <Heading size="md" color="purple.500">Understanding Your Reading</Heading>
+      <Heading size="md" color="purple.500">
+        Understanding Your Reading
+      </Heading>
 
       <Accordion allowMultiple w="full">
         <AccordionItem>
@@ -235,17 +198,23 @@ const ReadingOverview = () => {
               <HStack>
                 <Icon as={FaLightbulb} color="purple.500" />
                 <Text fontWeight="bold">Enhanced Analysis:</Text>
-                <Text>Get deeper insights with AI-powered interpretation of traditional symbolism.</Text>
+                <Text>
+                  Get deeper insights with AI-powered interpretation of
+                  traditional symbolism.
+                </Text>
               </HStack>
               <HStack>
                 <Icon as={FaComments} color="purple.500" />
                 <Text fontWeight="bold">Chat Consultation:</Text>
-                <Text>Engage in a dialogue about your reading for personalized guidance.</Text>
+                <Text>
+                  Engage in a dialogue about your reading for personalized
+                  guidance.
+                </Text>
               </HStack>
               <Divider />
               <Text fontSize="sm" color="gray.600">
-                Each feature is designed to help you gain deeper understanding of the I Ching's wisdom
-                and its application to your situation.
+                Each feature is designed to help you gain deeper understanding
+                of the I Ching's wisdom and its application to your situation.
               </Text>
             </VStack>
           </AccordionPanel>
@@ -255,30 +224,29 @@ const ReadingOverview = () => {
   );
 };
 
-const LandingSection = ({ onGenerate, isLoading }: { onGenerate: (method?: 'yarrow' | 'coins') => void, isLoading: boolean }) => {
-  const bgColor = useColorModeValue('gray.50', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+const LandingSection = ({
+  onGenerate,
+  isLoading,
+}: {
+  onGenerate: (method: HexagramMode) => void; // Expect method argument
+  isLoading: boolean;
+}) => {
+  const bgColor = useColorModeValue("gray.50", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
   const [showMethodSelector, setShowMethodSelector] = useState(false);
-  const { handleSelectMethod: selectDivinationMethod, isLoading: isCasting } = useMethodSelection();
+  // Removed useMethodSelection hook usage here, handled by App/useReading
   const toast = useToast();
 
-  const handleSelectMethod = async (method: 'yarrow' | 'coins') => {
-    try {
-      // First try the new endpoint with the selected method
-      await selectDivinationMethod(method);
-      // If successful, call the standard generation function for rendering
-      onGenerate();
-      toast({
-        title: `Reading generated using ${method === 'yarrow' ? 'Yarrow stalk' : 'Three coins'} method`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (err) {
-      // Fall back to the standard generate function
-      console.warn('New endpoint failed, using standard generate:', err);
-      onGenerate();
-    }
+  const handleSelectMethod = (method: HexagramMode) => {
+    // Directly call the onGenerate prop passed from App with the selected method
+    onGenerate(method);
+    setShowMethodSelector(false); // Hide selector after selection
+    toast({
+      title: `Casting initiated using ${method === "yarrow" ? "Yarrow stalk" : "Three coins"} method`,
+      status: "info",
+      duration: 3000,
+      isClosable: true,
+    });
   };
 
   return (
@@ -295,14 +263,17 @@ const LandingSection = ({ onGenerate, isLoading }: { onGenerate: (method?: 'yarr
         <YinYangSpinner />
         <Heading size="xl">Welcome to I Ching</Heading>
         <Text fontSize="lg" color="gray.600">
-          The I Ching, or Book of Changes, is an ancient Chinese divination text and one of the oldest of the Chinese classics.
-          Through a process of casting coins or yarrow stalks, it provides guidance and wisdom for your questions and situations.
+          The I Ching, or Book of Changes, is an ancient Chinese divination text
+          and one of the oldest of the Chinese classics. Through a process of
+          casting coins or yarrow stalks, it provides guidance and wisdom for
+          your questions and situations.
         </Text>
 
         {!showMethodSelector ? (
           <>
             <Text fontSize="md" color="gray.500">
-              Click the button below to begin your consultation. Take a moment to center yourself and focus on your question.
+              Click the button below to begin your consultation. Take a moment
+              to center yourself and focus on your question.
             </Text>
             <Button
               onClick={() => setShowMethodSelector(true)}
@@ -311,6 +282,7 @@ const LandingSection = ({ onGenerate, isLoading }: { onGenerate: (method?: 'yarr
               px={8}
               fontSize="md"
               leftIcon={<Icon as={FaYinYang} />}
+              isDisabled={isLoading} // Disable if already loading
             >
               Begin Consultation
             </Button>
@@ -322,8 +294,8 @@ const LandingSection = ({ onGenerate, isLoading }: { onGenerate: (method?: 'yarr
             </Text>
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} width="100%">
               <Button
-                onClick={() => handleSelectMethod('yarrow')}
-                isLoading={isLoading}
+                onClick={() => handleSelectMethod("yarrow")}
+                isLoading={isLoading} // Use the isLoading prop from App
                 variant="outline"
                 colorScheme="purple"
                 size="lg"
@@ -338,8 +310,8 @@ const LandingSection = ({ onGenerate, isLoading }: { onGenerate: (method?: 'yarr
               </Button>
 
               <Button
-                onClick={() => handleSelectMethod('coins')}
-                isLoading={isLoading}
+                onClick={() => handleSelectMethod("coins")}
+                isLoading={isLoading} // Use the isLoading prop from App
                 variant="outline"
                 colorScheme="purple"
                 size="lg"
@@ -364,118 +336,154 @@ const LandingSection = ({ onGenerate, isLoading }: { onGenerate: (method?: 'yarr
 };
 
 export function App() {
+  // Use the useReading hook for managing reading state and generation
   const {
     reading,
-    isGenerating,
-    generateError,
+    isLoading: isGenerating, // Renamed for clarity if needed, or use directly
+    error: generateError,
     generate,
-  } = useHexagram();
+    setMode, // Function to set the casting mode
+    clearReading, // Function to clear the reading
+    loadReading, // Function to load a reading (e.g., from history)
+  } = useReading();
 
   const {
     interpretation,
     isLoading: isInterpreting,
     isEnhancedLoading,
     error: interpretError,
-    getInterpretation,
+    // Removed getInterpretation as it's less used now
     getEnhancedInterpretation,
     startChat,
     isChatEnabled,
+    chatHistory, // Pass down if needed
+    sendMessage, // Pass down if needed
+    clearInterpretation, // Add function to clear interpretation state
   } = useAiInterpreter();
 
   const toast = useToast();
 
-  const handleGenerate = async () => {
+  // Updated handleGenerate to accept method and use useReading hook
+  const handleGenerate = async (method: HexagramMode) => {
     try {
-      console.log('Starting reading generation...');
-      const result = await generate();
-      console.log('Reading generated');
-      // Removed automatic call to getInterpretation
+      console.log(`Starting reading generation with ${method}...`);
+      setMode(method); // Set the mode in the useReading hook
+      await generate(); // Generate the reading using the hook
+      console.log("Reading generated");
+      // Interpretation is now triggered manually via AiInterpretation component
+      clearInterpretation(); // Clear previous interpretation on new reading
     } catch (error) {
-      console.error('Error in handleGenerate:', error);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to generate reading',
-        status: 'error',
-      });
+      // ...existing error handling...
     }
   };
 
   const handleGetEnhanced = async () => {
     if (!reading) return;
     try {
-      // Get hexagram_number from either the root or data property
-      const hexagramNumber = ('data' in reading && reading.data?.hexagram_number)
-        ? reading.data.hexagram_number
-        : (reading as any).hexagram_number;
-
-      if (!hexagramNumber) {
-        throw new Error('Invalid reading: hexagram number not found');
+      // Robustly get hexagram_number
+      const primaryHexagram = reading.hexagram || reading.primary_hexagram;
+      if (!primaryHexagram?.number) {
+         throw new Error("Invalid reading: hexagram number not found");
       }
-
-      await getEnhancedInterpretation(hexagramNumber);
+      await getEnhancedInterpretation(primaryHexagram.number);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to get enhanced interpretation',
-        status: 'error',
-      });
+      // ...existing error handling...
     }
   };
 
   const handleStartChat = async () => {
+     if (!reading) {
+       console.error("No reading available when trying to start chat");
+       toast({ /* ... */ });
+       return;
+     }
     try {
-      // Pass the current reading to the startChat function
-      if (reading) {
-        // Handle both possible structures of the reading object
-        const readingToUse = {
-          ...reading,
-          hexagram_number: ('data' in reading && reading.data?.hexagram_number)
-            ? reading.data.hexagram_number
-            : (reading as any).hexagram_number
-        };
-
-        if (!readingToUse.hexagram_number) {
-          throw new Error('Invalid reading: hexagram number not found');
-        }
-
-        await startChat(readingToUse as any);
-      } else {
-        console.error('No reading available when trying to start chat');
-        toast({
-          title: 'Error',
-          description: 'No reading available. Please generate a reading first.',
-          status: 'error',
-        });
-      }
+       // Ensure reading object structure is suitable for startChat
+       const primaryHexagram = reading.hexagram || reading.primary_hexagram;
+       if (!primaryHexagram?.number) {
+         throw new Error("Invalid reading: hexagram number not found for chat");
+       }
+       // Pass a consistent structure if needed by startChat, or just the reading
+       await startChat(reading);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to start chat',
-        status: 'error',
-      });
+      // ...existing error handling...
     }
+  };
+
+  // Function to handle resetting the app state (clearing reading)
+  const handleReset = () => {
+    clearReading();
+    clearInterpretation();
+    // Optionally clear chat history if needed: clearChatHistory();
   };
 
   return (
     <Box minH="100vh" py={8}>
       {!reading ? (
+        // Pass the updated handleGenerate and isGenerating state
         <LandingSection onGenerate={handleGenerate} isLoading={isGenerating} />
       ) : (
-        <VStack spacing={8} px={4}>
-          <HexagramDisplay
-            reading={reading}
-            isLoading={isGenerating}
-          />
+        <VStack spacing={8} px={4} maxW="container.lg" mx="auto">
+           {/* Add a button to cast a new hexagram */}
+           <Button onClick={handleReset} colorScheme="gray" variant="outline" alignSelf="flex-start">
+             Cast New Hexagram
+           </Button>
+          <HexagramDisplay reading={reading} isLoading={isGenerating} />
           <AiInterpretation
             interpretation={interpretation}
             isLoading={isInterpreting}
-            error={interpretError || generateError?.message}
+            // Combine generation and interpretation errors potentially
+            error={generateError || interpretError}
             onGetEnhanced={handleGetEnhanced}
             isEnhancedLoading={isEnhancedLoading}
             onStartChat={handleStartChat}
             isChatEnabled={isChatEnabled}
           />
-          {isChatEnabled && <ChatInterface />}
+          {isChatEnabled && (
+             <ChatInterface
+               // Pass necessary props if ChatInterface expects them
+               // chatHistory={chatHistory}
+               // sendMessage={sendMessage}
+               // isLoading={isInterpreting} // Or a dedicated chat loading state
+               // error={interpretError} // Or a dedicated chat error state
+             />
+           )}
+      {!reading ? (
+        // Pass the updated handleGenerate function
+        <LandingSection
+          onGenerate={handleGenerate}
+          isLoading={isGenerating}
+          onMethodSelect={setMode}
+        />
+      ) : (
+        <VStack spacing={8} px={4} maxW="container.xl" mx="auto">
+          {/* Pass the full reading object to HexagramDisplay */}
+          <HexagramDisplay reading={reading} isLoading={isGenerating} />
+
+          <AiInterpretation
+            interpretation={interpretation}
+            isLoading={isInterpreting} // Loading state for basic interpretation (if any)
+            error={interpretError?.message || generateError?.message}
+            onGetEnhanced={handleGetEnhanced}
+            isEnhancedLoading={isEnhancedLoading} // Loading state for enhanced interpretation
+            onStartChat={handleStartChat}
+            isChatEnabled={isChatEnabled}
+          />
+          {/* Conditionally render ChatInterface based on isChatEnabled state from hook */}
+          {isChatEnabled && (
+            <ChatInterface
+            // Pass necessary props if ChatInterface needs them directly
+            // chatHistory={chatHistory}
+            // isLoading={isInterpreting} // Or a specific chat loading state
+            // error={interpretError?.message}
+            // sendMessage={sendMessage}
+            />
+          )}
+
+          {/* Add a button to cast a new reading */}
+          <Button onClick={clearReading} colorScheme="gray" mt={6}>
+            Cast New Hexagram
+          </Button>
         </VStack>
       )}
     </Box>

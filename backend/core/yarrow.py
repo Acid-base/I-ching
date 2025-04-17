@@ -335,8 +335,8 @@ def print_reading(lines: HexagramLines, hexagram_data: HexagramData) -> None:
                             break
                 print(f"\nLine {line_number}:\n{line_meaning}")
 
-            transformed_lines: HexagramLines = transform_lines(lines)
-            transformed_hex_num: int = get_hexagram_number(transformed_lines)
+            resulting_transformed_lines: HexagramLines = transform_lines(lines)
+            transformed_hex_num: int = get_hexagram_number(resulting_transformed_lines)
             transformed_hexagram: Optional[HexagramDataItem] = hexagram_data.get(
                 transformed_hex_num
             )
