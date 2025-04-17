@@ -8,7 +8,7 @@ export interface Trigram {
 
 export interface LineInfo {
   lineNumber: number;
-  type: 'yang' | 'yin';
+  type: "yang" | "yin";
   meaning: string;
 }
 
@@ -70,4 +70,47 @@ export interface HexagramLine {
   text?: string;
 }
 
-export type HexagramMode = 'yarrow' | 'coin' | 'random';
+export type HexagramMode = "yarrow" | "coin" | "random";
+
+// Types for I Ching hexagrams and readings
+
+export interface Trigrams {
+  upper: string;
+  lower: string;
+}
+
+export interface HexagramData {
+  number: number;
+  name: string;
+  description: string;
+  judgment?: string;
+  image?: string;
+  trigrams?: Trigrams;
+}
+
+export interface HexagramReading {
+  hexagram_number: number;
+  lines: string[];
+  changing_lines: number[];
+  reading: HexagramData;
+  relating_hexagram?: HexagramData | null;
+  interpretation?: string;
+}
+
+export enum HexagramLine {
+  YIN = 0, // Broken line
+  YANG = 1, // Solid line
+}
+
+export interface ReadingRequest {
+  question: string;
+  mode?: string;
+  verbose?: boolean;
+  seed?: number;
+}
+
+export enum DivinationMethod {
+  YARROW_STALKS = "yarrow_stalks",
+  THREE_COINS = "coins",
+  MANUAL = "manual",
+}

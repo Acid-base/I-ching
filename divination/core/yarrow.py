@@ -1,5 +1,4 @@
-"""
-Core implementation of the I Ching yarrow stalk divination method.
+"""Core implementation of the I Ching yarrow stalk divination method.
 This module provides a correct implementation of the traditional yarrow stalk
 algorithm with the verified probability distribution:
 
@@ -32,8 +31,7 @@ def get_value_from_remainder(remainder_count: int) -> int:
 
 
 def perform_division(stalks_in: int) -> tuple[int, int]:
-    """
-    Simulates one stage of dividing the yarrow stalks.
+    """Simulates one stage of dividing the yarrow stalks.
 
     Args:
         stalks_in: Number of stalks available for division
@@ -78,8 +76,7 @@ def perform_division(stalks_in: int) -> tuple[int, int]:
 
 
 def generate_one_line(seed: Optional[int] = None) -> int:
-    """
-    Performs the three division stages to generate a single I Ching line value.
+    """Performs the three division stages to generate a single I Ching line value.
 
     Args:
         seed: Optional random seed for reproducible results
@@ -101,7 +98,9 @@ def generate_one_line(seed: Optional[int] = None) -> int:
 
         # Check if we have enough stalks for the next stage
         if stage < 3 and stalks_for_next_stage <= 0 and current_stalks != 0:
-            raise ValueError(f"Ran out of stalks prematurely at stage {stage + 1} with {stalks_for_next_stage}")
+            raise ValueError(
+                f"Ran out of stalks prematurely at stage {stage + 1} with {stalks_for_next_stage}"
+            )
 
     # Convert the three stage values to line value
     final_line_value = sum(stage_values)
@@ -119,8 +118,7 @@ def generate_one_line(seed: Optional[int] = None) -> int:
 
 
 def generate_hexagram(seed: Optional[int] = None, verbose: bool = False) -> List[int]:
-    """
-    Generates a complete hexagram (6 lines) using the yarrow stalk method.
+    """Generates a complete hexagram (6 lines) using the yarrow stalk method.
 
     Args:
         seed: Optional random seed for reproducible results
@@ -160,8 +158,7 @@ def generate_hexagram(seed: Optional[int] = None, verbose: bool = False) -> List
 
 # --- Hexagram Calculation Functions ---
 def get_trigram_value(lines: List[int]) -> int:
-    """
-    Converts three lines into a trigram value (0-7).
+    """Converts three lines into a trigram value (0-7).
     Follows the traditional binary convention: Yang=1, Yin=0.
 
     Args:
@@ -179,8 +176,7 @@ def get_trigram_value(lines: List[int]) -> int:
 
 
 def get_trigram_name(value: int) -> str:
-    """
-    Get the traditional name of a trigram based on its value.
+    """Get the traditional name of a trigram based on its value.
 
     Args:
         value: Integer value of the trigram (0-7)
@@ -202,8 +198,7 @@ def get_trigram_name(value: int) -> str:
 
 
 def get_hexagram_number(lines: List[int]) -> int:
-    """
-    Converts a list of 6 lines into the traditional King Wen hexagram number (1-64).
+    """Converts a list of 6 lines into the traditional King Wen hexagram number (1-64).
 
     Args:
         lines: List of 6 line values (6, 7, 8, or 9), from bottom to top
@@ -304,8 +299,7 @@ def get_hexagram_number(lines: List[int]) -> int:
 
 
 def get_transformed_lines(lines: List[int]) -> List[int]:
-    """
-    Transforms lines with changing values (6 or 9) into their stable opposites.
+    """Transforms lines with changing values (6 or 9) into their stable opposites.
 
     Args:
         lines: List of line values (6, 7, 8, 9)
@@ -325,8 +319,7 @@ def get_transformed_lines(lines: List[int]) -> List[int]:
 
 
 def get_changing_line_indices(lines: List[int]) -> List[int]:
-    """
-    Gets the indices of changing lines (6 or 9).
+    """Gets the indices of changing lines (6 or 9).
 
     Args:
         lines: List of line values (6, 7, 8, 9)
@@ -339,8 +332,7 @@ def get_changing_line_indices(lines: List[int]) -> List[int]:
 
 # --- JSON Loading and Reading Functions ---
 def load_hexagram_data(filepath: str = DEFAULT_JSON_PATH) -> Dict[int, Dict[str, Any]]:
-    """
-    Loads hexagram data from a JSON file into a dictionary keyed by number.
+    """Loads hexagram data from a JSON file into a dictionary keyed by number.
 
     Args:
         filepath: Path to the JSON file containing hexagram data
@@ -379,8 +371,7 @@ def load_hexagram_data(filepath: str = DEFAULT_JSON_PATH) -> Dict[int, Dict[str,
 
 
 def print_reading(lines: List[int], hexagram_data: Dict[int, Dict[str, Any]]) -> None:
-    """
-    Prints a complete I Ching reading in a human-readable format.
+    """Prints a complete I Ching reading in a human-readable format.
 
     Args:
         lines: List of 6 line values (6, 7, 8, 9)
@@ -462,7 +453,9 @@ def print_reading(lines: List[int], hexagram_data: Dict[int, Dict[str, Any]]) ->
 
         if transformed_hexagram:
             print("\n" + "-" * 60)
-            print(f"TRANSFORMED INTO HEXAGRAM {transformed_hex_num}: {transformed_hexagram['name']}")
+            print(
+                f"TRANSFORMED INTO HEXAGRAM {transformed_hex_num}: {transformed_hexagram['name']}"
+            )
             if "chineseName" in transformed_hexagram:
                 print(f"Chinese: {transformed_hexagram['chineseName']}")
             print("-" * 60)
@@ -480,8 +473,7 @@ def print_reading(lines: List[int], hexagram_data: Dict[int, Dict[str, Any]]) ->
 
 # --- Main Functions ---
 def cast_hexagram(seed: Optional[int] = None, verbose: bool = False) -> Dict[str, Any]:
-    """
-    Performs a complete I Ching reading using the yarrow stalk method.
+    """Performs a complete I Ching reading using the yarrow stalk method.
 
     Args:
         seed: Optional random seed for reproducible results
@@ -525,10 +517,12 @@ def cast_hexagram(seed: Optional[int] = None, verbose: bool = False) -> Dict[str
 
 
 def get_reading(
-    mode: str = "yarrow", seed: Optional[int] = None, verbose: bool = False, print_result: bool = False
+    mode: str = "yarrow",
+    seed: Optional[int] = None,
+    verbose: bool = False,
+    print_result: bool = False,
 ) -> Dict[str, Any]:
-    """
-    Generates a complete I Ching reading.
+    """Generates a complete I Ching reading.
 
     Args:
         mode: The divination method ('yarrow' only for now)
@@ -552,13 +546,63 @@ def get_reading(
         print_reading(cast_result["lines"], hexagram_data)
 
     # Return cast result and hexagram data
-    result = {"cast_result": cast_result, "primary_hexagram": hexagram_data.get(cast_result["primary_hexagram_number"])}
+    result = {
+        "cast_result": cast_result,
+        "primary_hexagram": hexagram_data.get(cast_result["primary_hexagram_number"]),
+    }
 
     # Add transformed hexagram if there are changing lines
     if "transformed_hexagram_number" in cast_result:
-        result["transformed_hexagram"] = hexagram_data.get(cast_result["transformed_hexagram_number"])
+        result["transformed_hexagram"] = hexagram_data.get(
+            cast_result["transformed_hexagram_number"]
+        )
 
     return result
+
+
+class YarrowStalkMethod:
+    """Class implementation of the traditional yarrow stalk divination method."""
+
+    def __init__(self, seed: Optional[int] = None):
+        """Initialize the YarrowStalkMethod.
+
+        Args:
+            seed: Optional random seed for reproducible results
+        """
+        self.seed = seed
+
+    def generate_hexagram(self) -> List[int]:
+        """Generate a complete hexagram using the yarrow stalk method.
+
+        Returns:
+            List of 6 line values (6, 7, 8, or 9) from bottom to top
+        """
+        return generate_hexagram(seed=self.seed)
+
+    def cast_hexagram(self, verbose: bool = False) -> Dict[str, Any]:
+        """Perform a complete I Ching casting using the yarrow stalk method.
+
+        Args:
+            verbose: Whether to print details during the process
+
+        Returns:
+            Dictionary containing the cast results
+        """
+        return cast_hexagram(seed=self.seed, verbose=verbose)
+
+    def get_reading(self, verbose: bool = False, print_result: bool = False) -> Dict[str, Any]:
+        """Generate a complete I Ching reading.
+
+        Args:
+            verbose: Whether to print details during the process
+            print_result: Whether to print the complete reading
+
+        Returns:
+            Dictionary containing the complete reading
+        """
+        return get_reading(
+            mode="yarrow", seed=self.seed, verbose=verbose, print_result=print_result
+        )
 
 
 if __name__ == "__main__":

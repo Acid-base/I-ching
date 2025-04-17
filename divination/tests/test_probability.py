@@ -1,6 +1,7 @@
-from collections import Counter
 import os
 import sys
+from collections import Counter
+from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -9,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from yarrow import YarrowStalks
 
 
-def test_yarrow_stalk_probabilities():
+def test_yarrow_stalk_probabilities() -> None:
     """Test that the yarrow stalk method produces the expected probability distribution:
     - 6 (Old Yin): 1/16 (6.25%)
     - 7 (Young Yang): 5/16 (31.25%)
@@ -18,7 +19,7 @@ def test_yarrow_stalk_probabilities():
     """
     # Setup
     NUM_TRIALS = 10000  # Large number for statistical significance
-    EXPECTED_PROBABILITIES = {
+    EXPECTED_PROBABILITIES: Dict[int, float] = {
         6: 1 / 16,  # Old Yin
         7: 5 / 16,  # Young Yang
         8: 7 / 16,  # Young Yin
@@ -29,13 +30,15 @@ def test_yarrow_stalk_probabilities():
     yarrow = YarrowStalks(seed=42)
 
     # Generate many line values
-    line_values = [yarrow.generate_single_line_value() for _ in range(NUM_TRIALS)]
+    line_values: List[int] = [yarrow.generate_single_line_value() for _ in range(NUM_TRIALS)]
 
     # Count occurrences
-    counts = Counter(line_values)
+    counts: Counter[int] = Counter(line_values)
 
     # Calculate actual probabilities
-    actual_probabilities = {line: count / NUM_TRIALS for line, count in counts.items()}
+    actual_probabilities: Dict[int, float] = {
+        line: count / NUM_TRIALS for line, count in counts.items()
+    }
 
     # Print results for analysis
     print("\nYarrow Stalk Probability Test Results:")
@@ -53,9 +56,12 @@ def test_yarrow_stalk_probabilities():
 
     # Statistical test - Chi-squared goodness of fit
     observed_counts = np.array([counts[line] for line in sorted(EXPECTED_PROBABILITIES.keys())])
-    expected_counts = np.array([
-        EXPECTED_PROBABILITIES[line] * NUM_TRIALS for line in sorted(EXPECTED_PROBABILITIES.keys())
-    ])
+    expected_counts = np.array(
+        [
+            EXPECTED_PROBABILITIES[line] * NUM_TRIALS
+            for line in sorted(EXPECTED_PROBABILITIES.keys())
+        ]
+    )
 
     chi2 = np.sum((observed_counts - expected_counts) ** 2 / expected_counts)
     df = len(EXPECTED_PROBABILITIES) - 1  # degrees of freedom
@@ -74,26 +80,28 @@ def test_yarrow_stalk_probabilities():
         )
 
 
-def test_multiple_seeds():
+def test_multiple_seeds() -> None:
     """Test the distribution holds across multiple random seeds."""
     NUM_SEEDS = 10
     TRIALS_PER_SEED = 1000
-    EXPECTED_PROBABILITIES = {
+    EXPECTED_PROBABILITIES: Dict[int, float] = {
         6: 1 / 16,  # Old Yin
         7: 5 / 16,  # Young Yang
         8: 7 / 16,  # Young Yin
         9: 3 / 16,  # Old Yang
     }
 
-    overall_counts = Counter()
+    overall_counts: Counter[int] = Counter()
 
     for seed in range(NUM_SEEDS):
         yarrow = YarrowStalks(seed=seed)
-        lines = [yarrow.generate_single_line_value() for _ in range(TRIALS_PER_SEED)]
+        lines: List[int] = [yarrow.generate_single_line_value() for _ in range(TRIALS_PER_SEED)]
         overall_counts.update(lines)
 
     total_trials = NUM_SEEDS * TRIALS_PER_SEED
-    actual_probabilities = {line: count / total_trials for line, count in overall_counts.items()}
+    actual_probabilities: Dict[int, float] = {
+        line: count / total_trials for line, count in overall_counts.items()
+    }
 
     # Print results
     print("\nMultiple Seeds Probability Test:")
@@ -118,16 +126,19 @@ def test_multiple_seeds():
         )
 
 
-def test_sequence_independence():
+def test_sequence_independence() -> None:
     """Test that consecutive line generations are independent."""
     NUM_PAIRS = 5000
     yarrow = YarrowStalks(seed=42)
 
     # Generate pairs of consecutive lines
-    pairs = [(yarrow.generate_single_line_value(), yarrow.generate_single_line_value()) for _ in range(NUM_PAIRS)]
+    pairs: List[Tuple[int, int]] = [
+        (yarrow.generate_single_line_value(), yarrow.generate_single_line_value())
+        for _ in range(NUM_PAIRS)
+    ]
 
     # Count transitions between line values
-    transitions = {}
+    transitions: Dict[int, Counter[int]] = {}
     for first, second in pairs:
         if first not in transitions:
             transitions[first] = Counter()
@@ -148,12 +159,16 @@ def test_sequence_independence():
         total = sum(transitions[first].values())
         probs = [transitions[first].get(second, 0) / total for second in [6, 7, 8, 9]]
         first_name = ["Old Yin", "Young Yang", "Young Yin", "Old Yang"][first - 6]
-        print(f"{first} ({first_name}) | {probs[0]:.6f}    | {probs[1]:.6f}      | {probs[2]:.6f}     | {probs[3]:.6f}")
+        print(
+            f"{first} ({first_name}) | {probs[0]:.6f}    | {probs[1]:.6f}      | {probs[2]:.6f}     | {probs[3]:.6f}"
+        )
 
     # Check that second line probabilities are independent of first line
     for first_line in transitions:
         total_after_first = sum(transitions[first_line].values())
-        second_probs = {line: count / total_after_first for line, count in transitions[first_line].items()}
+        second_probs: Dict[int, float] = {
+            line: count / total_after_first for line, count in transitions[first_line].items()
+        }
 
         # Verify each second line probability is close to expected
         for line, expected_prob in expected.items():

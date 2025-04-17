@@ -22,15 +22,22 @@ import {
   useColorModeValue,
   useToast,
   useToken,
-} from '@chakra-ui/react';
-import { AiInterpretation } from '@components/AiInterpretation';
-import { ChatInterface } from '@components/ChatInterface';
-import { HexagramDisplay } from '@components/HexagramDisplay';
-import { keyframes } from '@emotion/react';
-import { useAiInterpreter } from '@hooks/useAiInterpreter';
-import { useHexagram } from '@hooks/useHexagram';
-import React from 'react';
-import { FaBook, FaChartLine, FaComments, FaExchangeAlt, FaLightbulb, FaYinYang } from 'react-icons/fa';
+} from "@chakra-ui/react";
+import { AiInterpretation } from "@components/AiInterpretation";
+import { ChatInterface } from "@components/ChatInterface";
+import { HexagramDisplay } from "@components/HexagramDisplay";
+import { keyframes } from "@emotion/react";
+import { useAiInterpreter } from "@hooks/useAiInterpreter";
+import { useHexagram } from "@hooks/useHexagram";
+import React from "react";
+import {
+  FaBook,
+  FaChartLine,
+  FaComments,
+  FaExchangeAlt,
+  FaLightbulb,
+  FaYinYang,
+} from "react-icons/fa";
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -38,7 +45,7 @@ const spin = keyframes`
 `;
 
 const YinYangSpinner = () => {
-  const purple = useToken('colors', 'purple.500');
+  const purple = useToken("colors", "purple.500");
   return (
     <Box
       display="flex"
@@ -58,36 +65,52 @@ interface ProcessStepProps {
 }
 
 const ProcessStep = ({ icon, title, description }: ProcessStepProps) => {
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const bgColor = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
   return (
     <Card bg={bgColor} borderColor={borderColor} borderWidth="1px">
       <CardBody>
         <VStack spacing={3} align="center">
           <Icon as={icon} w={8} h={8} color="purple.500" />
-          <Text fontWeight="bold" fontSize="lg">{title}</Text>
-          <Text color="gray.600" textAlign="center">{description}</Text>
+          <Text fontWeight="bold" fontSize="lg">
+            {title}
+          </Text>
+          <Text color="gray.600" textAlign="center">
+            {description}
+          </Text>
         </VStack>
       </CardBody>
     </Card>
   );
 };
 
-const ComponentItem = ({ icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
+const ComponentItem = ({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+}) => (
   <ListItem>
     <ListIcon as={icon} color="purple.500" />
-    <Text as="span" fontWeight="bold">{title}</Text>
+    <Text as="span" fontWeight="bold">
+      {title}
+    </Text>
     <Text>{description}</Text>
   </ListItem>
 );
 
 const ReadingOverview = () => {
-  const bgColor = useColorModeValue('gray.50', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const bgColor = useColorModeValue("gray.50", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
 
   return (
     <VStack spacing={6} w="full">
-      <Heading size="md" color="purple.500">Understanding Your Reading</Heading>
+      <Heading size="md" color="purple.500">
+        Understanding Your Reading
+      </Heading>
 
       <Accordion allowMultiple w="full">
         <AccordionItem>
@@ -169,17 +192,23 @@ const ReadingOverview = () => {
               <HStack>
                 <Icon as={FaLightbulb} color="purple.500" />
                 <Text fontWeight="bold">Enhanced Analysis:</Text>
-                <Text>Get deeper insights with AI-powered interpretation of traditional symbolism.</Text>
+                <Text>
+                  Get deeper insights with AI-powered interpretation of
+                  traditional symbolism.
+                </Text>
               </HStack>
               <HStack>
                 <Icon as={FaComments} color="purple.500" />
                 <Text fontWeight="bold">Chat Consultation:</Text>
-                <Text>Engage in a dialogue about your reading for personalized guidance.</Text>
+                <Text>
+                  Engage in a dialogue about your reading for personalized
+                  guidance.
+                </Text>
               </HStack>
               <Divider />
               <Text fontSize="sm" color="gray.600">
-                Each feature is designed to help you gain deeper understanding of the I Ching's wisdom
-                and its application to your situation.
+                Each feature is designed to help you gain deeper understanding
+                of the I Ching's wisdom and its application to your situation.
               </Text>
             </VStack>
           </AccordionPanel>
@@ -189,9 +218,15 @@ const ReadingOverview = () => {
   );
 };
 
-const LandingSection = ({ onGenerate, isLoading }: { onGenerate: () => void, isLoading: boolean }) => {
-  const bgColor = useColorModeValue('gray.50', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+const LandingSection = ({
+  onGenerate,
+  isLoading,
+}: {
+  onGenerate: () => void;
+  isLoading: boolean;
+}) => {
+  const bgColor = useColorModeValue("gray.50", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
 
   return (
     <Container maxW="container.md" py={20}>
@@ -207,11 +242,14 @@ const LandingSection = ({ onGenerate, isLoading }: { onGenerate: () => void, isL
         <YinYangSpinner />
         <Heading size="xl">Welcome to I Ching</Heading>
         <Text fontSize="lg" color="gray.600">
-          The I Ching, or Book of Changes, is an ancient Chinese divination text and one of the oldest of the Chinese classics.
-          Through a process of casting coins or yarrow stalks, it provides guidance and wisdom for your questions and situations.
+          The I Ching, or Book of Changes, is an ancient Chinese divination text
+          and one of the oldest of the Chinese classics. Through a process of
+          casting coins or yarrow stalks, it provides guidance and wisdom for
+          your questions and situations.
         </Text>
         <Text fontSize="md" color="gray.500">
-          Click the button below to begin your consultation. Take a moment to center yourself and focus on your question.
+          Click the button below to begin your consultation. Take a moment to
+          center yourself and focus on your question.
         </Text>
         <Button
           onClick={onGenerate}
@@ -232,12 +270,8 @@ const LandingSection = ({ onGenerate, isLoading }: { onGenerate: () => void, isL
 };
 
 export function App() {
-  const {
-    reading,
-    isGenerating,
-    generateError,
-    generate,
-  } = useHexagram();
+  const { reading, isGenerating, generateError, generateHexagram } =
+    useHexagram();
 
   const {
     interpretation,
@@ -252,18 +286,30 @@ export function App() {
 
   const toast = useToast();
 
+  // Add state for options
+  const [castingMethod, setCastingMethod] = React.useState("yarrow_stalks");
+  const [question, setQuestion] = React.useState("");
+  const [activeTab, setActiveTab] = React.useState("home");
+
   const handleGenerate = async () => {
+    console.log("Starting reading generation...");
     try {
-      console.log('Starting reading generation...');
-      const result = await generate();
-      console.log('Reading generated');
-      // Removed automatic call to getInterpretation
+      const result = await generateHexagram({
+        mode: castingMethod,
+        verbose: false,
+        question: question || undefined,
+      });
+
+      if (result) {
+        setActiveTab("reading");
+      }
     } catch (error) {
-      console.error('Error in handleGenerate:', error);
+      console.error("Error in handleGenerate:", error);
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to generate reading',
-        status: 'error',
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to generate reading",
+        status: "error",
       });
     }
   };
@@ -272,20 +318,24 @@ export function App() {
     if (!reading) return;
     try {
       // Get hexagram_number from either the root or data property
-      const hexagramNumber = ('data' in reading && reading.data?.hexagram_number)
-        ? reading.data.hexagram_number
-        : (reading as any).hexagram_number;
+      const hexagramNumber =
+        "data" in reading && reading.data?.hexagram_number
+          ? reading.data.hexagram_number
+          : (reading as any).hexagram_number;
 
       if (!hexagramNumber) {
-        throw new Error('Invalid reading: hexagram number not found');
+        throw new Error("Invalid reading: hexagram number not found");
       }
 
       await getEnhancedInterpretation(hexagramNumber);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to get enhanced interpretation',
-        status: 'error',
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to get enhanced interpretation",
+        status: "error",
       });
     }
   };
@@ -297,29 +347,31 @@ export function App() {
         // Handle both possible structures of the reading object
         const readingToUse = {
           ...reading,
-          hexagram_number: ('data' in reading && reading.data?.hexagram_number)
-            ? reading.data.hexagram_number
-            : (reading as any).hexagram_number
+          hexagram_number:
+            "data" in reading && reading.data?.hexagram_number
+              ? reading.data.hexagram_number
+              : (reading as any).hexagram_number,
         };
 
         if (!readingToUse.hexagram_number) {
-          throw new Error('Invalid reading: hexagram number not found');
+          throw new Error("Invalid reading: hexagram number not found");
         }
 
         await startChat(readingToUse as any);
       } else {
-        console.error('No reading available when trying to start chat');
+        console.error("No reading available when trying to start chat");
         toast({
-          title: 'Error',
-          description: 'No reading available. Please generate a reading first.',
-          status: 'error',
+          title: "Error",
+          description: "No reading available. Please generate a reading first.",
+          status: "error",
         });
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to start chat',
-        status: 'error',
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to start chat",
+        status: "error",
       });
     }
   };
@@ -330,10 +382,7 @@ export function App() {
         <LandingSection onGenerate={handleGenerate} isLoading={isGenerating} />
       ) : (
         <VStack spacing={8} px={4}>
-          <HexagramDisplay
-            reading={reading}
-            isLoading={isGenerating}
-          />
+          <HexagramDisplay reading={reading} isLoading={isGenerating} />
           <AiInterpretation
             interpretation={interpretation}
             isLoading={isInterpreting}
