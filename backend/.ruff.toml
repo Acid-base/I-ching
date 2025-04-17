@@ -1,0 +1,24 @@
+# Root level settings
+line-length = 100
+target-version = "py39"
+
+[lint]
+select = ["E", "F", "W"]
+ignore = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    "__pycache__",
+    "venv",
+    ".venv",
+]
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[lint.mccabe]
+# Default to a complexity level of 10.
+max-complexity = 10

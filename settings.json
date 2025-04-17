@@ -1,0 +1,297 @@
+{
+  // ===== EDITOR SETTINGS =====
+  "editor.fontSize": 16,
+  "editor.fontFamily": "JetBrains Mono",
+  "editor.wordWrap": "wordWrapColumn",
+  "editor.wordWrapColumn": 120,
+  "editor.autoIndent": "full",
+  "editor.renderWhitespace": "none",
+  "editor.tabSize": 2,
+  "editor.rulers": [
+    120
+  ],
+  "editor.bracketPairColorization.enabled": true,
+  "editor.linkedEditing": false,
+  "editor.minimap.enabled": false,
+  "editor.codeLens": false,
+  "editor.mouseWheelZoom": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.formatOnType": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  // ===== FILES SETTINGS =====
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "files.trimTrailingWhitespace": true,
+  "files.associations": {
+    "*.json": "jsonc"
+  },
+  "files.exclude": {
+    "**/.trunk/*actions/": true,
+    "**/.trunk/*logs/": true,
+    "**/.trunk/*notifications/": true,
+    "**/.trunk/*out/": true,
+    "**/.trunk/*plugins/": true,
+    "**/node_modules": true,
+    "**/.DS_Store": true,
+    "**/.git": true,
+    "**/coverage": true,
+    "**/.pytest_cache": true,
+    "**/*.pyc": true,
+    "**/__pycache__": true,
+    "**/.venv": true
+  },
+  "files.watcherExclude": {
+    "**/.trunk/*actions/": true,
+    "**/.trunk/*logs/": true,
+    "**/.trunk/*notifications/": true,
+    "**/.trunk/*out/": true,
+    "**/.trunk/*plugins/": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  // ===== WORKBENCH SETTINGS =====
+  "workbench.colorTheme": "Solarized Pro",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.sideBar.location": "left",
+  "explorer.compactFolders": false,
+  "explorer.confirmDragAndDrop": false,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/__pycache__": true,
+    "**/.venv": true,
+    "**/coverage": true,
+    "**/.pytest_cache": true,
+    "**/*.pyc": true
+  },
+  // ===== TERMINAL SETTINGS =====
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.enableMultiLinePasteWarning": "auto",
+  // ===== GIT SETTINGS =====
+  "git.enableSmartCommit": true,
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.openRepositoryInParentFolders": "always",
+  // ===== LANGUAGE SPECIFIC SETTINGS =====
+  // --- Python ---
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4
+  },
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.importFormat": "absolute",
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.inlayHints.variableTypes": true,
+  "python.analysis.inlayHints.pytestParameters": true,
+  "python.analysis.inlayHints.callArgumentNames": true,
+  "python.analysis.extraPaths": [
+    "src"
+  ],
+  "python.autoComplete.extraPaths": [
+    "src"
+  ],
+  "python.languageServer": "Pylance",
+  "python.terminal.activateEnvironment": true,
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": [
+    "tests"
+  ],
+  "ruff.fixOnSave": true,
+  "ruff.lint.ignore": [
+    "E501"
+  ],
+  "ruff.lineLength": 100,
+  // --- JavaScript/TypeScript ---
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "typescript.preferences.importModuleSpecifierEnding": "js",
+    "typescript.preferences.quoteStyle": "single"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "javascript.preferences.importModuleSpecifierEnding": "js",
+  "javascript.preferences.quoteStyle": "single",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.preferences.importModuleSpecifierEnding": "js",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.tsdk": "./node_modules/typescript/lib",
+  "typescript.format.enable": true,
+  "typescript.validate.enable": true,
+  "typescript.suggestionActions.enabled": true,
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "typescript.inlayHints.parameterNames.enabled": "all",
+  "typescript.inlayHints.variableTypes.enabled": true,
+  // --- HTML ---
+  "html.format.indentInnerHtml": true,
+  "html.format.wrapAttributes": "auto",
+  "html.format.wrapLineLength": 120,
+  // ===== EXTENSION SETTINGS =====
+  // --- GitHub Copilot ---
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false,
+    "python": true,
+    "javascript": true,
+    "typescript": false,
+    "javascriptreact": true,
+    "typescriptreact": true
+  },
+  // --- Continue.dev ---
+  "continue.llm": "openai",
+  "continue.openai.model": "gpt-4o",
+  "continue.embeddings.model": "transformers.js",
+  "continue.embeddings.transformersJsModel": "Xenova/all-MiniLM-L6-v2",
+  "continue.telemetry.enabled": false,
+  "continue.showInlayHints": true,
+  "continue.inlayHint.style": "dimmed",
+  "continue.codebase.autoIndex": true,
+  "continue.contextProviders.includeCode": true,
+  "continue.contextProviders.includeTerminal": true,
+  "continue.contextProviders.includeActiveFile": true,
+  "continue.enableTabAutocomplete": false,
+  // --- Run on Save ---
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": "\\.py$",
+        "cmd": "echo 'Python file saved: ${fileBasename}'",
+        "message": "Running python file check",
+        "messageAfter": "Python file check complete",
+        "showElapsed": true
+      },
+      {
+        "match": "\\.(js|jsx|ts|tsx)$",
+        "cmd": "echo 'JS/TS file saved: ${fileBasename}'",
+        "message": "Running Javascript/Typescript file check",
+        "messageAfter": "Javascript/Typescript check complete",
+        "showElapsed": true
+      },
+      {
+        "match": ".*",
+        "cmd": "echo 'All file saved: ${fileBasename}'",
+        "message": "Running file check",
+        "messageAfter": "File check complete",
+        "showElapsed": true,
+        "isAsync": true
+      }
+    ]
+  },
+  "runonsave.commands": [
+    {
+      "match": ".*\\.py$",
+      "cmd": "Tasks: Run Task",
+      "args": [
+        "Run Tests"
+      ]
+    }
+  ],
+  // --- Color Customizations ---
+  "workbench.colorCustomizations": {
+    "editorCursor.foreground": "#3fb950",
+    "editor.lineHighlightBorder": "#000000",
+    "editorBracketHighlight.foreground1": "#a371f7",
+    "editorBracketHighlight.foreground2": "#58a6ff",
+    "editorBracketHighlight.foreground3": "#3fb950",
+    "editorBracketHighlight.foreground4": "#d29922",
+    "editorBracketHighlight.foreground5": "#db6d28",
+    "editorBracketHighlight.foreground6": "#f85149",
+    "editorError.foreground": "#f85149",
+    "editorWarning.foreground": "#d29922",
+    "tab.activeBorder": "#3fb950",
+    "tab.activeBorderTop": "#3fb950",
+    "terminalCursor.foreground": "#3fb950"
+  },
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "name": "Control flow",
+        "scope": "keyword.control, keyword.control.flow",
+        "settings": {
+          "fontStyle": "italic bold"
+        }
+      },
+      {
+        "name": "Definitions",
+        "scope": [
+          "entity.name.type.class",
+          "meta.definition.method",
+          "meta.definition.property",
+          "meta.definition.function",
+          "entity.name.section.markdown"
+        ],
+        "settings": {
+          "fontStyle": "bold"
+        }
+      },
+      {
+        "name": "Function/Method Calls and HTML attributes",
+        "scope": [
+          "meta.function-call",
+          "keyword.operator.new.ts",
+          "entity.other.attribute-name.html"
+        ],
+        "settings": {
+          "fontStyle": "italic"
+        }
+      },
+      {
+        "name": "Other",
+        "scope": [
+          "keyword.control.import",
+          "keyword.control.export",
+          "keyword.control.from",
+          "keyword.operator",
+          "meta.type.annotation",
+          "storage"
+        ],
+        "settings": {
+          "fontStyle": ""
+        }
+      }
+    ]
+  },
+  // ===== SECURITY & TELEMETRY =====
+  "telemetry.telemetryLevel": "off",
+  "security.workspace.trust.untrustedFiles": "open",
+  // ===== REMOTE & OTHER SETTINGS =====
+  "remote.SSH.remotePlatform": {
+    "code.fffuuu.duckdns.org": "linux",
+    "10.0.0.50": "linux",
+    "10.0.0.62": "linux"
+  },
+  "diffEditor.codeLens": true,
+  "geminicodeassist.project": "rclone-426022",
+  "mcp": {
+    "servers": {
+      "fetch": {
+        "command": "uvx",
+        "args": [
+          "mcp-server-fetch"
+        ]
+      }
+    }
+  }
+}
