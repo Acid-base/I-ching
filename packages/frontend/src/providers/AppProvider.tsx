@@ -1,6 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ChakraProvider } from '@chakra-ui/react'
-import { ErrorBoundary } from '../components/ErrorBoundary'
+import { ChakraProvider } from '@chakra-ui/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -9,9 +10,13 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false
     }
   }
-})
+});
 
-export function AppProvider({ children }: { children: React.ReactNode }) {
+interface AppProviderProps {
+  children: React.ReactNode;
+}
+
+export function AppProvider({ children }: AppProviderProps) {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -20,5 +25,5 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         </ChakraProvider>
       </QueryClientProvider>
     </ErrorBoundary>
-  )
-} 
+  );
+}

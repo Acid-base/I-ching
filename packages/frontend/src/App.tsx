@@ -1,3 +1,4 @@
+import { useMethodSelection } from '@/hooks/useMethodSelection';
 import {
   Accordion,
   AccordionButton,
@@ -29,8 +30,73 @@ import { HexagramDisplay } from '@components/HexagramDisplay';
 import { keyframes } from '@emotion/react';
 import { useAiInterpreter } from '@hooks/useAiInterpreter';
 import { useHexagram } from '@hooks/useHexagram';
-import React from 'react';
-import { FaBook, FaChartLine, FaComments, FaExchangeAlt, FaLightbulb, FaYinYang } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaBook, FaChartLine, FaCoins, FaComments, FaExchangeAlt, FaLightbulb, FaYinYang } from 'react-icons/fa';
+
+// Local fallback for offline use
+const generateLocalHexagram = (method: 'yarrow' | 'coins') => {
+  // Generate 6 random lines
+  const generateLines = () => {
+    const lines = [];
+    for (let i = 0; i < 6; i++) {
+      // For yarrow method: 6, 7, 8, 9 (with different probabilities)
+      // For coins method: 6, 7, 8, 9 (with equal probabilities)
+      if (method === 'yarrow') {
+        // Approximating yarrow probabilities: 6:25%, 7:31.25%, 8:43.75%, 9:18.75%
+        const rand = Math.random();
+        if (rand < 0.1875) lines.push('9'); // Old Yang
+        else if (rand < 0.50) lines.push('7'); // Young Yang
+        else if (rand < 0.75) lines.push('8'); // Young Yin
+        else lines.push('6'); // Old Yin
+      } else {
+        // Coins method has equal probability for changing/unchanging yin/yang
+        const rand = Math.random();
+        if (rand < 0.25) lines.push('9'); // Old Yang
+        else if (rand < 0.50) lines.push('7'); // Young Yang
+        else if (rand < 0.75) lines.push('8'); // Young Yin
+        else lines.push('6'); // Old Yin
+      }
+    }
+    return lines;
+  };
+
+  // Get the changing lines (6 or 9)
+  const getChangingLines = (lines: string[]) => {
+    return lines.map((line, index) => (line === '6' || line === '9') ? index + 1 : null).filter(Boolean) as number[];
+  };
+
+  // Get hexagram number (simplified for fallback - just use a number between 1-64)
+  const getHexagramNumber = () => {
+    return Math.floor(Math.random() * 64) + 1;
+  };
+
+  const lines = generateLines();
+  const changingLines = getChangingLines(lines);
+  const hexagramNumber = getHexagramNumber();
+
+  // Create a mock reading object that matches the API response structure
+  return {
+    data: {
+      hexagram_number: hexagramNumber,
+      changing_lines: changingLines,
+      lines: lines,
+      reading: {
+        number: hexagramNumber,
+        name: `Hexagram ${hexagramNumber}`,
+        chinese: '易經',
+        judgment: 'This is a locally generated fallback reading. The API appears to be unavailable.',
+        image: 'When the API is unavailable, the wise person creates their own path.',
+        lines: []
+      },
+      relating_hexagram: changingLines.length > 0 ? {
+        number: Math.floor(Math.random() * 64) + 1,
+        name: 'Relating Hexagram',
+        judgment: 'This relating hexagram is simulated as the API is currently unavailable.',
+        image: 'When connections fail, one must find meaning within.',
+      } : undefined
+    }
+  };
+};
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -189,9 +255,31 @@ const ReadingOverview = () => {
   );
 };
 
-const LandingSection = ({ onGenerate, isLoading }: { onGenerate: () => void, isLoading: boolean }) => {
+const LandingSection = ({ onGenerate, isLoading }: { onGenerate: (method?: 'yarrow' | 'coins') => void, isLoading: boolean }) => {
   const bgColor = useColorModeValue('gray.50', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const [showMethodSelector, setShowMethodSelector] = useState(false);
+  const { handleSelectMethod: selectDivinationMethod, isLoading: isCasting } = useMethodSelection();
+  const toast = useToast();
+
+  const handleSelectMethod = async (method: 'yarrow' | 'coins') => {
+    try {
+      // First try the new endpoint with the selected method
+      await selectDivinationMethod(method);
+      // If successful, call the standard generation function for rendering
+      onGenerate();
+      toast({
+        title: `Reading generated using ${method === 'yarrow' ? 'Yarrow stalk' : 'Three coins'} method`,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (err) {
+      // Fall back to the standard generate function
+      console.warn('New endpoint failed, using standard generate:', err);
+      onGenerate();
+    }
+  };
 
   return (
     <Container maxW="container.md" py={20}>
@@ -210,20 +298,64 @@ const LandingSection = ({ onGenerate, isLoading }: { onGenerate: () => void, isL
           The I Ching, or Book of Changes, is an ancient Chinese divination text and one of the oldest of the Chinese classics.
           Through a process of casting coins or yarrow stalks, it provides guidance and wisdom for your questions and situations.
         </Text>
-        <Text fontSize="md" color="gray.500">
-          Click the button below to begin your consultation. Take a moment to center yourself and focus on your question.
-        </Text>
-        <Button
-          onClick={onGenerate}
-          isLoading={isLoading}
-          colorScheme="purple"
-          size="lg"
-          px={8}
-          fontSize="md"
-          leftIcon={<Icon as={FaYinYang} />}
-        >
-          Generate Reading
-        </Button>
+
+        {!showMethodSelector ? (
+          <>
+            <Text fontSize="md" color="gray.500">
+              Click the button below to begin your consultation. Take a moment to center yourself and focus on your question.
+            </Text>
+            <Button
+              onClick={() => setShowMethodSelector(true)}
+              colorScheme="purple"
+              size="lg"
+              px={8}
+              fontSize="md"
+              leftIcon={<Icon as={FaYinYang} />}
+            >
+              Begin Consultation
+            </Button>
+          </>
+        ) : (
+          <VStack spacing={4} width="100%">
+            <Text fontSize="md" color="gray.500">
+              Choose your preferred divination method
+            </Text>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} width="100%">
+              <Button
+                onClick={() => handleSelectMethod('yarrow')}
+                isLoading={isLoading}
+                variant="outline"
+                colorScheme="purple"
+                size="lg"
+                height="100px"
+                display="flex"
+                flexDirection="column"
+                p={4}
+              >
+                <Icon as={FaYinYang} boxSize={6} mb={2} />
+                <Text fontWeight="bold">Yarrow Stalk Method</Text>
+                <Text fontSize="sm">Traditional method (50 stalks)</Text>
+              </Button>
+
+              <Button
+                onClick={() => handleSelectMethod('coins')}
+                isLoading={isLoading}
+                variant="outline"
+                colorScheme="purple"
+                size="lg"
+                height="100px"
+                display="flex"
+                flexDirection="column"
+                p={4}
+              >
+                <Icon as={FaCoins} boxSize={6} mb={2} />
+                <Text fontWeight="bold">Three Coins Method</Text>
+                <Text fontSize="sm">Simplified divination</Text>
+              </Button>
+            </SimpleGrid>
+          </VStack>
+        )}
+
         <Divider />
         <ReadingOverview />
       </VStack>

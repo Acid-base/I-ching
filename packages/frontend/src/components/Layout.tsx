@@ -1,14 +1,32 @@
-import { Box, Container, VStack, Heading, Text, Button, HStack, Select, useColorModeValue } from '@chakra-ui/react';
-import { YinYangSpinner } from './YinYangSpinner';
+import {
+  Box,
+  Button,
+  Container,
+  Heading,
+  HStack,
+  IconButton,
+  Modal,
+  ModalContent,
+  ModalOverlay,
+  Select,
+  Text,
+  useColorModeValue,
+  useDisclosure,
+  VStack,
+} from '@chakra-ui/react';
+import { FaHistory } from 'react-icons/fa';
+import { useReading } from '../hooks/useReading';
 import { HexagramDisplay } from './HexagramDisplay';
-import { ChatInterface } from './ChatInterface';
-import { useReading } from '@hooks/useReading';
-import { HexagramMode } from '@/types';
+import { ReadingsHistory } from './ReadingsHistory';
+import { YinYangSpinner } from './YinYangSpinner';
+// Define HexagramMode type locally
+type HexagramMode = 'yarrow' | 'coins';
 
 export function Layout() {
-  const { reading, isLoading, error, generate, setMode } = useReading();
+  const { reading, isLoading, error, generate, setMode, loadReading } = useReading();
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
     <Container maxW="container.md" py={20}>
@@ -21,7 +39,17 @@ export function Layout() {
         borderColor={borderColor}
         textAlign="center"
       >
-        <YinYangSpinner />
+        <HStack w="100%" justifyContent="space-between" alignItems="center">
+          <Box />
+          <YinYangSpinner />
+          <IconButton
+            aria-label="View reading history"
+            icon={<FaHistory />}
+            size="md"
+            onClick={onOpen}
+          />
+        </HStack>
+
         <Heading size="xl">Welcome to I Ching</Heading>
         <Text fontSize="lg" color="gray.600">
           The I Ching, or Book of Changes, is an ancient Chinese divination text and one of the oldest of the Chinese classics.
@@ -30,36 +58,36 @@ export function Layout() {
 
         <HStack spacing={4}>
           <Select
+            w="50%"
             onChange={(e) => setMode(e.target.value as HexagramMode)}
-            defaultValue={HexagramMode.YARROW}
-            w="auto"
+            defaultValue="yarrow"
           >
-            <option value={HexagramMode.YARROW}>Yarrow Stalks</option>
-            <option value={HexagramMode.COINS}>Three Coins</option>
+            <option value="yarrow">Yarrow Stalk Method</option>
+            <option value="coins">Coin Method</option>
           </Select>
           <Button
+            colorScheme="purple"
             onClick={generate}
             isLoading={isLoading}
-            colorScheme="purple"
-            size="lg"
+            loadingText="Casting..."
+            w="50%"
           >
             Cast Hexagram
           </Button>
         </HStack>
 
-        <Text fontSize="md" color="gray.500">
-          Click the button above to begin your consultation. Take a moment to center yourself and focus on your question.
-        </Text>
-
-        {error && (
-          <Text color="red.500">
-            Error: {error instanceof Error ? error.message : 'Failed to generate reading'}
-          </Text>
-        )}
+        {error && <Text color="red.500">{error}</Text>}
 
         {reading && <HexagramDisplay reading={reading} isLoading={isLoading} />}
-        {reading && <ChatInterface />}
       </VStack>
+
+      {/* Readings History Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} size="xl">
+        <ModalOverlay />
+        <ModalContent maxW="95%" maxH="90vh">
+          <ReadingsHistory onViewReading={loadReading} onClose={onClose} />
+        </ModalContent>
+      </Modal>
     </Container>
   );
 }

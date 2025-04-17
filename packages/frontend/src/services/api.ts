@@ -20,15 +20,15 @@ const api = axios.create({
 
 // Consolidate all API functions
 export const apiService = {
-  generateReading: async (mode: HexagramMode): Promise<ReadingResponse> => {
+  castHexagram: async (mode: HexagramMode): Promise<ReadingResponse> => {
     try {
-      const response = await axios.post(`${API_URL}/cast`, {
-        mode: mode,
+      const response = await api.post('/cast', {
+        mode,
         verbose: false,
       });
       return response.data;
     } catch (error) {
-      console.error('Error generating reading:', error);
+      console.error('Error casting hexagram:', error);
       throw error;
     }
   },
@@ -67,11 +67,5 @@ export const apiService = {
 };
 
 // Named exports for backward compatibility
-export const {
-  generateReading,
-  getHexagram,
-  interpretHexagram,
-  getEnhancedInterpretation,
-  startChat,
-  sendChatMessage,
-} = apiService;
+export const { castHexagram, getHexagram, interpretHexagram, getEnhancedInterpretation, startChat, sendChatMessage } =
+  apiService;

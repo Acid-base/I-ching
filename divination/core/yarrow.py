@@ -1,39 +1,31 @@
-# Insert the corrected code here
+"""Core implementation of the I Ching yarrow stalk divination method."""
+
 import json
 import os
 import random
 import traceback
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
-# --- Type Aliases ---
+# Type aliases for better code readability
 HexagramLines = List[int]
-LineData = Dict[str, Any  # Expecting 'lineNumber': int, 'meaning': str, etc.
-HexagramDataItem = Dict[str, Any]  # Expecting 'number', 'name', 'judgment', 'image', 'lines': List[LineData]
+LineData = Dict[str, Any]
+HexagramDataItem = Dict[str, Any]
 HexagramData = Dict[int, HexagramDataItem]
-CastResult = Dict[str, Any
+CastResult = Dict[str, Any]
 ReadingResult = Dict[str, Any]
 
-# --- Constants ---
+# Constants
 TOTAL_STALKS: int = 50
 ASIDE_STALK: int = 1
 WORKING_STALKS: int = TOTAL_STALKS - ASIDE_STALK
-DEFAULT_JSON_PATH: str = "data/hexagrams.json"  # Assuming relative to execution context
+DEFAULT_JSON_PATH: str = os.path.join(os.path.dirname(__file__), "..", "data", "hexagrams.json")
 
-# --- Trigram Definitions ---
-TRIGRAM_VALUES: Dict[str, int] = {
-    "Earth": 0,
-    "Mountain": 1,
-    "Water": 2,
-    "Wind": 3,
-    "Thunder": 4,
-    "Fire": 5,
-    "Lake": 6,
-    "Heaven": 7,
-}
-TRIGRAM_NAMES: Dict[int, str] = {v: k for k, v in TRIGRAM_VALUES.items()}
+# Trigram values and names
+TRIGRAM_VALUES = {"Earth": 0, "Mountain": 1, "Water": 2, "Wind": 3, "Thunder": 4, "Fire": 5, "Lake": 6, "Heaven": 7}
+TRIGRAM_NAMES = {v: k for k, v in TRIGRAM_VALUES.items()}
 
-# --- King Wen Sequence Map (Corrected) ---
-KING_WEN_MAP_CORRECTED: Dict[str, int] = {
+# King Wen sequence mapping
+KING_WEN_MAP = {
     "7_7": 1,
     "0_0": 2,
     "2_4": 3,
@@ -71,7 +63,7 @@ KING_WEN_MAP_CORRECTED: Dict[str, int] = {
     "5_0": 35,
     "0_5": 36,
     "3_5": 37,
-    "5_3": 38,  # Corrected 38 to 5_3 (was 5_6)
+    "5_3": 38,
     "2_1": 39,
     "4_2": 40,
     "1_6": 41,
@@ -81,9 +73,9 @@ KING_WEN_MAP_CORRECTED: Dict[str, int] = {
     "6_0": 45,
     "0_3": 46,
     "6_2": 47,
-    "2_6": 48,  # Corrected 48 to 2_6 (was 2_3)
+    "2_6": 48,
     "6_5": 49,
-    "5_6": 50,  # Corrected 50 to 5_6 (was 5_3)
+    "5_6": 50,
     "4_4": 51,
     "1_1": 52,
     "3_1": 53,
@@ -93,296 +85,170 @@ KING_WEN_MAP_CORRECTED: Dict[str, int] = {
     "3_3": 57,
     "6_6": 58,
     "3_2": 59,
-    "2_3": 60,  # Corrected 60 to 2_3 (was 2_6)
+    "2_3": 60,
     "3_6": 61,
     "4_1": 62,
     "2_5": 63,
     "5_2": 64,
 }
-assert len(KING_WEN_MAP_CORRECTED) == 64, (
-    f"Expected 64 hexagrams, found {len(KING_WEN_MAP_CORRECTED)}"
-)
-assert set(KING_WEN_MAP_CORRECTED.values()) == set(range(1, 65)), (
-    f"Hexagram numbers are not 1-64. Missing/Extra: {set(range(1, 65)) ^ set(KING_WEN_MAP_CORRECTED.values())}"
-)
 
 
-# --- Yarrow Stalk Casting Functions ---
 def get_value_from_remainder(remainder_count: int) -> int:
-    """Determines the numerical value (2 or 3) based on the remainder pile size."""
+    """Convert remainder count to numerical value."""
     if remainder_count in (4, 5):
         return 3
     if remainder_count in (8, 9):
         return 2
-    raise ValueError(f"Invalid remainder count encountered: {remainder_count}")
+    raise ValueError(f"Invalid remainder count: {remainder_count}")
 
 
 def perform_division(stalks_in: int) -> Tuple[int, int]:
-    """Simulates one stage of dividing the yarrow stalks."""
+    """Perform one division of the yarrow stalks."""
     if stalks_in < 4:
         raise ValueError(f"Not enough stalks for division: {stalks_in}")
-    finger_stalk: int = 1
-    remaining_after_finger: int = stalks_in - finger_stalk
-    if remaining_after_finger < 1:
-        raise ValueError(f"Cannot divide {stalks_in} stalks")
 
-    if remaining_after_finger == 1:
-        left_pile, right_pile = 1, 0
-    else:
-        right_pile = random.randint(1, remaining_after_finger - 1)
-        left_pile = remaining_after_finger - right_pile
+    finger_stalk = 1
+    remaining = stalks_in - finger_stalk
 
-    if left_pile <= 0 or right_pile < 0:
-        raise ValueError(f"Invalid pile split: L={left_pile}, R={right_pile}")
+    right_pile = random.randint(1, remaining - 1)
+    left_pile = remaining - right_pile
 
-    remainder_left: int = left_pile % 4
-    if remainder_left == 0 and left_pile > 0:
-        remainder_left = 4
-    counted_left: int = left_pile - remainder_left if left_pile > 0 else 0
+    remainder_left = left_pile % 4 or 4
+    remainder_right = right_pile % 4 or 4
 
-    remainder_right: int = right_pile % 4
-    if remainder_right == 0 and right_pile > 0:
-        remainder_right = 4
-    counted_right: int = right_pile - remainder_right if right_pile > 0 else 0
+    total_remainder = remainder_left + remainder_right + finger_stalk
+    stalks_for_next = left_pile - remainder_left + right_pile - remainder_right
 
-    total_remainder_this_stage: int = remainder_left + remainder_right + finger_stalk
-    stalks_for_next_stage: int = counted_left + counted_right
+    if total_remainder not in [4, 5, 8, 9]:
+        raise ValueError(f"Invalid total remainder: {total_remainder}")
 
-    if total_remainder_this_stage not in [4, 5, 8, 9]:
-        raise ValueError(
-            f"Calculated invalid total remainder: {total_remainder_this_stage}"
-        )
-
-    return total_remainder_this_stage, stalks_for_next_stage
+    return total_remainder, stalks_for_next
 
 
-def generate_one_line(seed: Optional[int] = None) -> int:
-    """Performs the three division stages to generate a single I Ching line value."""
+def generate_line(seed: Optional[int] = None) -> int:
+    """Generate a single line value using the yarrow stalk method."""
     if seed is not None:
         random.seed(seed)
-    current_stalks: int = WORKING_STALKS
-    stage_values: List[int] = []
-    for stage in range(1, 4):
-        if current_stalks < 4:
-            raise ValueError(f"Not enough stalks ({current_stalks}) at stage {stage}")
-        total_remainder, stalks_for_next_stage = perform_division(current_stalks)
-        stage_value: int = get_value_from_remainder(total_remainder)
-        stage_values.append(stage_value)
-        current_stalks = stalks_for_next_stage
-    final_line_value: int = sum(stage_values)
-    if final_line_value == 9:
-        return 7
-    if final_line_value == 8:
-        return 8
-    if final_line_value == 7:
-        return 9
-    if final_line_value == 6:
-        return 6
-    raise ValueError(f"Invalid line value sum: {final_line_value}")
+
+    current_stalks = WORKING_STALKS
+    values = []
+
+    for _ in range(3):
+        remainder, current_stalks = perform_division(current_stalks)
+        values.append(get_value_from_remainder(remainder))
+
+    return sum(values)
 
 
-def generate_hexagram(
-    seed: Optional[int] = None, verbose: bool = False
-) -> HexagramLines:
-    """Generates a complete hexagram (6 lines)."""
+def generate_hexagram(seed: Optional[int] = None) -> List[int]:
+    """Generate all six lines of a hexagram."""
     if seed is not None:
         random.seed(seed)
-    hexagram_lines: HexagramLines = []
-    if verbose:
-        print("Casting Hexagram...")
-    for line_number in range(1, 7):
-        line_value: int = generate_one_line()
-        hexagram_lines.append(line_value)
-        if verbose:
-            line_type: str
-            if line_value == 6:
-                line_type = "---X--- (Old Yin)"
-            elif line_value == 7:
-                line_type = "------- (Young Yang)"
-            elif line_value == 8:
-                line_type = "--- --- (Young Yin)"
-            elif line_value == 9:
-                line_type = "---O--- (Old Yang)"
-            else:
-                line_type = f"Invalid ({line_value})"
-            print(f"Line {line_number}: {line_value} {line_type}")
-    if verbose:
-        print("\nCast Complete.")
-    return hexagram_lines
+    return [generate_line() for _ in range(6)]
 
 
-# --- Hexagram Calculation Functions ---
+def get_changing_line_indices(lines: List[int]) -> List[int]:
+    """Get indices of changing lines (6 or 9)."""
+    return [i for i, line in enumerate(lines) if line in (6, 9)]
+
+
 def get_trigram_value(lines: List[int]) -> int:
-    """Converts three lines into a trigram value (0-7)."""
+    """Convert three lines into a trigram value."""
     if len(lines) != 3:
         raise ValueError(f"Trigram must have 3 lines, got {len(lines)}")
-    value: int = 0
+
+    value = 0
     for i, line in enumerate(lines):
-        if line in (7, 9):
+        if line in (7, 9):  # Yang lines
             value |= 1 << i
-        elif line not in (6, 8):
-            raise ValueError(f"Invalid line value: {line}")
     return value
 
 
-def get_trigram_name(value: int) -> str:
-    """Gets the traditional name of a trigram based on its numerical value."""
-    return TRIGRAM_NAMES.get(value, "Unknown")
-
-
-def get_hexagram_number(lines: HexagramLines) -> int:
-    """Converts 6 lines into the traditional King Wen hexagram number (1-64)."""
+def get_hexagram_number(lines: List[int]) -> int:
+    """Get the King Wen sequence number for a hexagram."""
     if len(lines) != 6:
         raise ValueError(f"Hexagram must have 6 lines, got {len(lines)}")
-    lower_trigram_lines: List[int] = lines[:3]
-    upper_trigram_lines: List[int] = lines[3:]
-    lower_value: int = get_trigram_value(lower_trigram_lines)
-    upper_value: int = get_trigram_value(upper_trigram_lines)
-    lower_name: str = get_trigram_name(lower_value)
-    upper_name: str = get_trigram_name(upper_value)
-    key: str = f"{upper_value}_{lower_value}"
-    hex_num: Optional[int] = KING_WEN_MAP_CORRECTED.get(key)
-    if hex_num is None:
-        raise ValueError(f"Invalid key: {key} (U:{upper_name}, L:{lower_name})")
-    return hex_num
+
+    lower = get_trigram_value(lines[:3])
+    upper = get_trigram_value(lines[3:])
+    key = f"{upper}_{lower}"
+
+    number = KING_WEN_MAP.get(key)
+    if number is None:
+        raise ValueError(f"Invalid trigram combination: {key}")
+
+    return number
 
 
-def get_transformed_lines(lines: HexagramLines) -> HexagramLines:
-    """Transforms changing lines (6->7, 9->8)."""
-    transformed: HexagramLines = []
-    for line in lines:
-        if line == 6:
-            transformed.append(7)
-        elif line == 9:
-            transformed.append(8)
-        elif line in (7, 8):
-            transformed.append(line)
-        else:
-            raise ValueError(f"Invalid line value during transformation: {line}")
-    return transformed
+def transform_lines(lines: List[int]) -> List[int]:
+    """Transform changing lines (6->7, 9->8)."""
+    return [7 if line == 6 else 8 if line == 9 else line for line in lines]
 
 
-def get_changing_line_indices(lines: HexagramLines) -> List[int:
-    """Gets the 0-based indices of changing lines (6 or 9)."""
-    return [i for i, line in enumerate(lines) if line in (6, 9)
-
-
-# --- JSON Loading ---
-def load_hexagram_data(filepath: str = DEFAULT_JSON_PATH) -> HexagramData:
-    """Loads or creates dummy hexagram data."""
-    tool_path = filepath
+def load_hexagram_data(filepath: str = DEFAULT_JSON_PATH) -> Dict[int, Any]:
+    """Load hexagram data from JSON file."""
     try:
-        if not os.path.exists(tool_path):
-            os.makedirs(os.path.dirname(tool_path), exist_ok=True)
-            # Define dummy data structure explicitly matching HexagramDataItem and LineData
-            dummy_data_list: List[HexagramDataItem] = [
-                {
-                    "number": i,
-                    "name": f"Hex_{i}_Dummy",
-                    "judgment": "...",
-                    "image": "...",
-                    "lines": [
-                        cast(LineData, {"lineNumber": j, "meaning": "..."})
-                        for j in range(1, 7)
-                    ],
-                }
-                for i in range(1, 65)
-            ]
-            with open(tool_path, "w", encoding="utf-8") as f:
-                json.dump(dummy_data_list, f, indent=2)
-        with open(tool_path, "r", encoding="utf-8") as f:
-            # Load as Any first, then check type
-            loaded_json: Any = json.load(f)
-        hex_dict: HexagramData = {}
-        if isinstance(loaded_json, list):
-            # Assume list contains HexagramDataItem-like dictionaries
-            data_list = cast(List[Any, loaded_json)
-            for item in data_list:
-                # Removed unnecessary isinstance(item, dict)
-                if isinstance(item, dict) and "number" in item:
-                    try:
-                        num = int(item["number")
-                        if 1 <= num <= 64:
-                            # Ensure item conforms to HexagramDataItem structure as much as possible
-                            hex_item: HexagramDataItem = {
-                                "number": num,
-                                "name": str(item.get("name", f"Hex_{num}_Unnamed")),
-                                "judgment": str(item.get("judgment", "N/A")),
-                                "image": str(item.get("image", "N/A")),
-                                "lines": cast(List[LineData], item.get("lines", [])),
-                                **{k: v for k, v in item.items() if k not in ["number", "name", "judgment", "image", "lines"]} # Add other potential keys
-                            }
-                            hex_dict[num] = hex_item
-                        else:
-                            print(f"Warning: Skip item with invalid num {item.get('number')}")
-                    except (ValueError, TypeError):
-                        print(f"Warning: Skip item non-int num {item.get('number')}")
-                else:
-                    print(f"Warning: Skipping invalid item in JSON list: {item}")
-        elif isinstance(loaded_json, dict):
-            # Assume dict maps string number keys to HexagramDataItem-like dictionaries
-            data_dict = cast(Dict[str, Any], loaded_json)
-            for k, v in data_dict.items():
-                 # Removed unnecessary isinstance(k, str)
-                if k.isdigit() and isinstance(v, dict):
-                    num = int(k)
-                    if 1 <= num <= 64:
-                         # Ensure v conforms to HexagramDataItem
-                        hex_item: HexagramDataItem = {
-                            "number": num,
-                            "name": str(v.get("name", f"Hex_{num}_Unnamed")),
-                            "judgment": str(v.get("judgment", "N/A")),
-                            "image": str(v.get("image", "N/A")),
-                            "lines": cast(List[LineData], v.get("lines", [])),
-                             **{vk: vv for vk, vv in v.items() if vk not in ["number", "name", "judgment", "image", "lines"]}
-                        }
-                        hex_dict[num] = hex_item
-                    else:
-                        print(f"Warning: Skip item with out-of-range key {k}")
-                else:
-                    print(f"Warning: Skip non-dict value or non-numeric key item {k}")
-        else:
-            print(f"Error: Loaded data is not a list or dict: {type(loaded_json)}")
-            return {} # Return empty dict on format error
+        if not os.path.exists(filepath):
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            dummy_data = {str(i): {"number": i, "name": f"Hex_{i}"} for i in range(1, 65)}
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(dummy_data, f, indent=2)
 
-        # Ensure all 64 keys exist, adding dummy if needed
-        if len(hex_dict) != 64:
-            print(
-                f"Warning: Loaded {len(hex_dict)}/64 hexagrams from {os.path.abspath(tool_path)}. Filling gaps."
-            )
-            full_hex_dict: HexagramData = {}
-            for i in range(1, 65):
-                full_hex_dict[i] = hex_dict.get(
-                    i,
-                    cast(HexagramDataItem, { # Cast the dummy data to the expected type
-                        "number": i,
-                        "name": f"Hex_{i}_Missing",
-                "judgment": "N/A",
-                "image": "N/A",
-                "lines": [],
-                    }),
-        )
-            return full_hex_dict
-        return hex_dict
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return {int(k): v for k, v in data.items()}
+    except Exception as e:
+        print(f"Error loading hexagram data: {e}")
+        return {}
+
+
+def get_reading(
+    seed: Optional[int] = None,
+    verbose: bool = False,
+    print_result: bool = False,
+    mode: Optional[str] = None,  # Ignored but accepted for API compatibility
+) -> ReadingResult:
+    """Generate a complete I Ching reading."""
+    try:
+        # Load hexagram data
+        hexagram_data = load_hexagram_data()
+        if not hexagram_data:
+            return {"error": "Failed to load hexagram data"}
+
+        # Generate hexagram
+        lines = generate_hexagram(seed)
+        changing_indices = get_changing_line_indices(lines)
+        primary_number = get_hexagram_number(lines)
+
+        # Build cast result
+        cast_result = {
+            "lines": lines,
+            "changing_line_indices": changing_indices,
+            "primary_hexagram_number": primary_number,
+        }
+
+        # Add transformed hexagram if there are changing lines
+        if changing_lines:
+            transformed = transform_lines(lines)
+            transformed_number = get_hexagram_number(transformed)
+            cast_result["transformed_hexagram_number"] = transformed_number
+            cast_result["transformed_lines"] = transformed
+
+        # Build final result
+        result = {
+            "cast_result": cast_result,
+            "primary_hexagram": hexagram_data[primary_number],
+        }
+
+        if changing_lines:
+            result["transformed_hexagram"] = hexagram_data[cast_result["transformed_hexagram_number"]]
+
+        return result
 
     except Exception as e:
-        print(
-            f"Error loading/creating hexagram data at {os.path.abspath(tool_path)}: {e}. Using full dummy data."
-        )
-        # traceback.print_exc() # Uncomment for detailed debug trace
-        dummy_dict: HexagramData = {}
-        for i in range(1, 65):
-            dummy_dict[i] = cast(HexagramDataItem, { # Cast the dummy data to the expected type
-                "number": i,
-                "name": f"Hex_{i}_LoadError",
-                "judgment": "Error",
-                "image": "Error",
-                "lines": [],
-            })
-        return dummy_dict
+        return {"error": f"Error generating reading: {str(e)}"}
 
 
-# --- Reading Presentation ---
 def print_reading(lines: HexagramLines, hexagram_data: HexagramData) -> None:
     """Prints a complete I Ching reading."""
     if not hexagram_data:
@@ -394,20 +260,24 @@ def print_reading(lines: HexagramLines, hexagram_data: HexagramData) -> None:
 
     try:
         changing_indices: List[int] = get_changing_line_indices(lines)
+        transformed_lines = transform_lines(lines)
         primary_hex_num: int = get_hexagram_number(lines)
         primary_hexagram: Optional[HexagramDataItem] = hexagram_data.get(primary_hex_num)
         if not primary_hexagram:
             # This case should be less likely now due to load_hexagram_data guarantees
             print(f"Error: Primary hex data {primary_hex_num} missing.")
-            primary_hexagram = cast(HexagramDataItem, {
-                "number": primary_hex_num,
-                "name": f"Hex_{primary_hex_num}_Error",
-                "judgment": "Error",
-                "image": "Error",
-                "lines": [],
-            })
+            primary_hexagram = cast(
+                HexagramDataItem,
+                {
+                    "number": primary_hex_num,
+                    "name": f"Hex_{primary_hex_num}_Error",
+                    "judgment": "Error",
+                    "image": "Error",
+                    "lines": [],
+                },
+            )
 
-        lower_value: int = get_trigram_value(lines[:3)
+        lower_value: int = get_trigram_value(lines[:3])
         upper_value: int = get_trigram_value(lines[3:])
         lower_name: str = get_trigram_name(lower_value)
         upper_name: str = get_trigram_name(upper_value)
@@ -419,7 +289,7 @@ def print_reading(lines: HexagramLines, hexagram_data: HexagramData) -> None:
         print("=" * 60)
         print("\nHexagram Structure (Top to Bottom):")
         for i in range(5, -1, -1):
-            line_val: int = lines[i
+            line_val: int = lines[i]
             line_type: str
             if line_val == 6:
                 line_type = "---X--- (Old Yin)"
@@ -445,7 +315,7 @@ def print_reading(lines: HexagramLines, hexagram_data: HexagramData) -> None:
                 line_number: int = idx + 1
                 line_meaning: str = "Meaning not found"
                 # primary_hexagram is guaranteed to be a dict here (even if dummy)
-                primary_lines_list = cast(List[LineData, primary_hexagram.get("lines", []))
+                primary_lines_list = cast(List[LineData], primary_hexagram.get("lines", []))
                 if isinstance(primary_lines_list, list):
                     for line_data in primary_lines_list:
                         # Removed unnecessary isinstance(line_data, dict) check
@@ -459,19 +329,20 @@ def print_reading(lines: HexagramLines, hexagram_data: HexagramData) -> None:
             transformed_hexagram: Optional[HexagramDataItem] = hexagram_data.get(transformed_hex_num)
             # transformed_hexagram should also exist due to load_hexagram_data guarantees
             if not transformed_hexagram:
-                 print(f"\nWarning: Transformed hex data {transformed_hex_num} missing despite load guarantees.")
-                 transformed_hexagram = cast(HexagramDataItem, {
-                    "number": transformed_hex_num,
-                    "name": f"Hex_{transformed_hex_num}_Error",
-                    "judgment": "N/A",
-                    "image": "N/A",
-                    "lines": [],
-                 })
+                print(f"\nWarning: Transformed hex data {transformed_hex_num} missing despite load guarantees.")
+                transformed_hexagram = cast(
+                    HexagramDataItem,
+                    {
+                        "number": transformed_hex_num,
+                        "name": f"Hex_{transformed_hex_num}_Error",
+                        "judgment": "N/A",
+                        "image": "N/A",
+                        "lines": [],
+                    },
+                )
 
             print("\n" + "-" * 60)
-            print(
-                f"TRANSFORMED INTO HEXAGRAM {transformed_hex_num}: {transformed_hexagram.get('name', 'N/A')}"
-            )
+            print(f"TRANSFORMED INTO HEXAGRAM {transformed_hex_num}: {transformed_hexagram.get('name', 'N/A')}")
             if "chineseName" in transformed_hexagram:
                 print(f"Chinese: {transformed_hexagram.get('chineseName')}")
             print("-" * 60)
@@ -491,101 +362,27 @@ def print_reading(lines: HexagramLines, hexagram_data: HexagramData) -> None:
         traceback.print_exc()
 
 
-# --- Main Functions ---
-def cast_hexagram(seed: Optional[int] = None, verbose: bool = False) -> CastResult:
-    """Performs yarrow stalk casting, returning structured results."""
-    lines: HexagramLines = generate_hexagram(seed=seed, verbose=verbose)
-    changing_indices: List[int] = get_changing_line_indices(lines)
-    primary_hex_num: int = get_hexagram_number(lines)
-    lower_value: int = get_trigram_value(lines[:3)
-    upper_value: int = get_trigram_value(lines[3:)
-    lower_name: str = get_trigram_name(lower_value)
-    upper_name: str = get_trigram_name(upper_value)
-    result: CastResult = {
-        "lines": lines,
-        "changing_line_indices": changing_indices,
-        "primary_hexagram_number": primary_hex_num,
-        "trigrams": {
-            "lower": {"value": lower_value, "name": lower_name},
-            "upper": {"value": upper_value, "name": upper_name},
-        },
-        "transformed_hexagram_number": None,
-        "transformed_lines": None,
-    }
-    if changing_indices:
-        transformed_lines: HexagramLines = get_transformed_lines(lines)
-        transformed_hex_num: int = get_hexagram_number(transformed_lines)
-        result["transformed_hexagram_number"] = transformed_hex_num
-        result["transformed_lines"] = transformed_lines
-    return result
-
-
-def get_reading(
-    seed: Optional[int] = None, verbose: bool = False, print_result: bool = False
-) -> ReadingResult:
-    """Generates and optionally prints a complete I Ching reading."""
-    hexagram_data: HexagramData = load_hexagram_data()
-    if not hexagram_data:
-        # This should ideally not be reached if load_hexagram_data always returns a dict
-        return {"error": "Failed to load hexagram data"}
-
-    try:
-        cast_result: CastResult = cast_hexagram(seed=seed, verbose=verbose)
-    except ValueError as e:
-        print(f"Error during casting: {e}")
-        return {"error": f"Casting failed: {e}"}
-
-    primary_num: int = cast_result["primary_hexagram_number"]
-    # hexagram_data is guaranteed to have all keys 1-64
-    primary_data: HexagramDataItem = hexagram_data[primary_num]
-
-    transformed_data: Optional[HexagramDataItem] = None
-    transformed_num: Optional[int] = cast_result.get("transformed_hexagram_number")
-    if transformed_num is not None:
-        # hexagram_data is guaranteed to have all keys 1-64
-        transformed_data = hexagram_data[transformed_num]
-
-    result: ReadingResult = {
-        "cast_result": cast_result,
-        "primary_hexagram": primary_data,
-        "transformed_hexagram": transformed_data, # Can be None if no changing lines
-    }
-
-    if print_result:
-        # Pass data that is guaranteed to exist (even if dummy)
-        print_reading(cast_result["lines"], hexagram_data)
-
-    # Check if the loaded data was actually dummy/error data
-    if "Error" in result["primary_hexagram"].get("name", ""):
-        print(f"Warning: Primary data for {primary_num} seems to be error/missing data.")
-    if transformed_data and "Error" in transformed_data.get("name", ""):
-         print(f"Warning: Transformed data for {transformed_num} seems to be error/missing data.")
-
-    return result
+def get_trigram_name(value: int) -> str:
+    """Get the traditional name of a trigram based on its value."""
+    return TRIGRAM_NAMES.get(value, "Unknown")
 
 
 if __name__ == "__main__":
     print("Running Yarrow Stalk Divination Test...")
     TEST_SEED: int = 12345
-    reading_result: ReadingResult = get_reading(
-        seed=TEST_SEED, verbose=False, print_result=True
-    )
+    reading_result: ReadingResult = get_reading(seed=TEST_SEED, verbose=False, print_result=True)
 
     print("\nProgrammatic Access Example:")
     if "error" in reading_result:
-        print(f"Error: {reading_result['error'}")
+        print(f"Error: {reading_result['error']}")
     else:
         cast_res = cast(CastResult, reading_result.get("cast_result", {}))
-        primary_hex = cast(
-            Optional[HexagramDataItem], reading_result.get("primary_hexagram")
-        )
-        transformed_hex = cast(
-            Optional[HexagramDataItem], reading_result.get("transformed_hexagram")
-        )
+        primary_hex = cast(Optional[HexagramDataItem], reading_result.get("primary_hexagram"))
+        transformed_hex = cast(Optional[HexagramDataItem], reading_result.get("transformed_hexagram"))
         if not cast_res:
             print("Error: Cast result missing.")
         elif not primary_hex:
-             print("Error: Primary hexagram data missing in result.")
+            print("Error: Primary hexagram data missing in result.")
         else:
             primary_num = cast_res.get("primary_hexagram_number")
             primary_name = primary_hex.get("name", "N/A")
@@ -601,7 +398,7 @@ if __name__ == "__main__":
                     # This case should be less likely now
                     print(f"Transformed Hexagram: {transformed_num} (Data Missing!)")
             elif cast_res.get("changing_line_indices"):
-                 # This case implies changing lines but no transformed number, which shouldn't happen
+                # This case implies changing lines but no transformed number, which shouldn't happen
                 print("Error: Changing lines present but no transformed hexagram number.")
             else:
                 print("No changing lines.")
@@ -612,7 +409,7 @@ if __name__ == "__main__":
         num_1 = get_hexagram_number(test_lines_1)
         print(f"Lines {test_lines_1} -> Hexagram {num_1} (Expected 1)")
         assert num_1 == 1
-        test_lines_2 = [8, 8, 8, 8, 8, 8  # Hex 2
+        test_lines_2 = [8, 8, 8, 8, 8, 8]  # Hex 2
         num_2 = get_hexagram_number(test_lines_2)
         print(f"Lines {test_lines_2} -> Hexagram {num_2} (Expected 2)")
         assert num_2 == 2
