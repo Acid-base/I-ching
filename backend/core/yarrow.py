@@ -205,10 +205,37 @@ def load_hexagram_data(filepath: str = DEFAULT_JSON_PATH) -> Dict[int, Any]:
 
         with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
-            return {int(k): v for k, v in data.items()}
+            # Validate and convert data
+            validated_data = {}
+            for k, v in data.items():
+                try:
+                    hex_num = int(k)
+                    # Ensure required fields are present
+                    if not isinstance(v, dict):
+                        print(f"Warning: Hexagram {k} data is not a dictionary")
+                        continue
+                    # Add missing fields with defaults if necessary
+                    if "number" not in v:
+                        v["number"] = hex_num
+                    if "name" not in v:
+                        v["name"] = f"Hexagram {hex_num}"
+                    if "description" not in v:
+                        v["description"] = f"Description for hexagram {hex_num}"
+                    if "judgment" not in v:
+                        v["judgment"] = f"Judgment for hexagram {hex_num}"
+                    if "image" not in v:
+                        v["image"] = f"Image for hexagram {hex_num}"
+                    validated_data[hex_num] = v
+                except (ValueError, TypeError) as e:
+                    print(f"Warning: Invalid hexagram data for key {k}: {e}")
+                    continue
+            return validated_data
     except Exception as e:
         print(f"Error loading hexagram data: {e}")
-        return {}
+        traceback.print_exc()
+        return {
+            i: {"number": i, "name": f"Hex_{i}", "description": "", "judgment": "", "image": ""} for i in range(1, 65)
+        }
 
 
 def get_reading(
@@ -250,9 +277,7 @@ def get_reading(
         }
 
         if changing_indices:
-            result["transformed_hexagram"] = hexagram_data[
-                cast_result["transformed_hexagram_number"]
-            ]
+            result["transformed_hexagram"] = hexagram_data[cast_result["transformed_hexagram_number"]]
 
         return result
 
@@ -337,15 +362,10 @@ def print_reading(lines: HexagramLines, hexagram_data: HexagramData) -> None:
 
             resulting_transformed_lines: HexagramLines = transform_lines(lines)
             transformed_hex_num: int = get_hexagram_number(resulting_transformed_lines)
-            transformed_hexagram: Optional[HexagramDataItem] = hexagram_data.get(
-                transformed_hex_num
-            )
+            transformed_hexagram: Optional[HexagramDataItem] = hexagram_data.get(transformed_hex_num)
             # transformed_hexagram should also exist due to load_hexagram_data guarantees
             if not transformed_hexagram:
-                print(
-                    f"Warning: Transformed hex data {transformed_hex_num} missing "
-                    f"despite load guarantees."
-                )
+                print(f"Warning: Transformed hex data {transformed_hex_num} missing despite load guarantees.")
 
                 transformed_hexagram = cast(
                     HexagramDataItem,
@@ -359,10 +379,7 @@ def print_reading(lines: HexagramLines, hexagram_data: HexagramData) -> None:
                 )
 
             print("\n" + "-" * 60)
-            print(
-                f"TRANSFORMED INTO HEXAGRAM {transformed_hex_num}: "
-                f"{transformed_hexagram.get('name', 'N/A')}"
-            )
+            print(f"TRANSFORMED INTO HEXAGRAM {transformed_hex_num}: {transformed_hexagram.get('name', 'N/A')}")
             if "chineseName" in transformed_hexagram:
                 print(f"Chinese: {transformed_hexagram.get('chineseName')}")
             print("-" * 60)
@@ -403,9 +420,7 @@ if __name__ == "__main__":
     else:
         cast_res = cast(CastResult, reading_result.get("cast_result", {}))
         primary_hex = cast(Optional[HexagramDataItem], reading_result.get("primary_hexagram"))
-        transformed_hex = cast(
-            Optional[HexagramDataItem], reading_result.get("transformed_hexagram")
-        )
+        transformed_hex = cast(Optional[HexagramDataItem], reading_result.get("transformed_hexagram"))
         if not cast_res:
             print("Error: Cast result missing.")
         elif not primary_hex:

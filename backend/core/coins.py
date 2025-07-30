@@ -2,7 +2,8 @@
 
 import os
 import random
-from typing import Any, Dict, List, Optional
+import traceback
+from typing import List, Optional, TypedDict
 
 # Import required functions from yarrow.py
 from .yarrow import (
@@ -12,13 +13,30 @@ from .yarrow import (
     transform_lines,
 )
 
-# Type aliases for better code readability
-HexagramLines = List[int]
-LineData = Dict[str, Any]
-HexagramDataItem = Dict[str, Any]
-HexagramData = Dict[int, HexagramDataItem]
-CastResult = Dict[str, Any]
-ReadingResult = Dict[str, Any]
+
+# Type definitions
+class HexagramData(TypedDict):
+    name: str
+    number: int
+    description: str
+    judgment: str
+    image: str
+
+
+class CastResult(TypedDict):
+    lines: List[int]
+    changing_line_indices: List[int]
+    primary_hexagram_number: int
+    transformed_hexagram_number: Optional[int]
+    transformed_lines: Optional[List[int]]
+
+
+class ReadingResult(TypedDict, total=False):
+    cast_result: CastResult
+    primary_hexagram: HexagramData
+    transformed_hexagram: HexagramData
+    error: str
+
 
 # Constants
 DEFAULT_JSON_PATH: str = os.path.join(os.path.dirname(__file__), "..", "data", "hexagrams.json")
@@ -73,7 +91,7 @@ def get_reading(
     verbose: bool = False,
     print_result: bool = False,
     mode: Optional[str] = None,  # mode parameter is ignored but accepted for API compatibility
-) -> Dict[str, Any]:
+) -> ReadingResult:
     """Generate a complete I Ching reading using the three coins method."""
     try:
         # Load hexagram data
@@ -84,34 +102,50 @@ def get_reading(
         # Generate hexagram
         lines = generate_hexagram(seed=seed, verbose=verbose)
         changing_lines = get_changing_line_indices(lines)
-        primary_number = get_hexagram_number(lines)
+        primary_number = int(get_hexagram_number(lines))
+
+        # Verify we can find the primary hexagram
+        if primary_number not in hexagram_data:
+            return {"error": f"Invalid hexagram number: {primary_number}"}
 
         # Build cast result
-        cast_result = {
+        cast_result: CastResult = {
             "lines": lines,
             "changing_line_indices": changing_lines,
             "primary_hexagram_number": primary_number,
+            "transformed_hexagram_number": None,
+            "transformed_lines": None,
+        }
+
+        # Initialize the reading result
+        result: ReadingResult = {
+            "cast_result": cast_result,
+            "primary_hexagram": hexagram_data[primary_number],
         }
 
         # Add transformed hexagram if there are changing lines
         if changing_lines:
             transformed = transform_lines(lines)
-            transformed_number = get_hexagram_number(transformed)
-            cast_result["transformed_hexagram_number"] = transformed_number
-            cast_result["transformed_lines"] = transformed
-
-        # Build final result
-        result = {
-            "cast_result": cast_result,
-            "primary_hexagram": hexagram_data[primary_number],
-        }
-
-        # Fix line 113: Convert the hexagram number to int
-        if changing_lines:
-            transformed_number = int(cast_result["transformed_hexagram_number"])
-            result["transformed_hexagram"] = hexagram_data[transformed_number]
+            transformed_number = int(get_hexagram_number(transformed))
+            # Verify we can find the transformed hexagram
+            if transformed_number in hexagram_data:
+                cast_result["transformed_hexagram_number"] = transformed_number
+                cast_result["transformed_lines"] = transformed
+                result["transformed_hexagram"] = hexagram_data[transformed_number]
+                if print_result:
+                    print("\nReading Result:")
+                    print(f"Primary Hexagram: {result['primary_hexagram']['name']} (#{primary_number})")
+                    print(f"Changing Lines: {changing_lines}")
+                    print(f"Transformed Hexagram: {result['transformed_hexagram']['name']} (#{transformed_number})")
+            else:
+                if print_result:
+                    print("\nReading Result:")
+                    print(f"Primary Hexagram: {result['primary_hexagram']['name']} (#{primary_number})")
+                    print(f"Changing Lines: {changing_lines}")
+                    print("Transformed Hexagram not found.")
 
         return result
 
     except Exception as e:
+        traceback.print_exc()  # Print the full stacktrace for debugging
         return {"error": f"Error generating reading: {str(e)}"}

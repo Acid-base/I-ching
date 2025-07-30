@@ -2,9 +2,11 @@
 
 import os
 import random
+from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -12,6 +14,18 @@ from pydantic import BaseModel
 
 from core import coins, yarrow
 from models.schemas import DivinationMethod, HexagramData, ReadingRequest, ReadingResponse
+
+# Load environment variables from .env file
+env_path = Path(__file__).parent / ".env"
+if env_path.exists():
+    print(f"Loading environment variables from {env_path}")
+    load_dotenv(env_path)
+else:
+    print(f"No .env file found at {env_path}, using environment variables from system")
+
+# Verify critical environment variables
+if not os.getenv("GEMINI_API_KEY"):
+    print("WARNING: GEMINI_API_KEY environment variable is not set")
 
 app = FastAPI(
     title="I Ching API",
@@ -118,17 +132,11 @@ async def cast_hexagram(request: ReadingRequest) -> JSONResponse:
         else:
             return JSONResponse(
                 status_code=400,
-                content={
-                    "detail": (
-                        f"Invalid divination method: {request.mode}. Must be 'yarrow' or 'coins'"
-                    )
-                },
+                content={"detail": (f"Invalid divination method: {request.mode}. Must be 'yarrow' or 'coins'")},
             )
 
         if not reading:
-            return JSONResponse(
-                status_code=500, content={"detail": "Invalid reading result format"}
-            )
+            return JSONResponse(status_code=500, content={"detail": "Invalid reading result format"})
 
         if "error" in reading:
             return JSONResponse(status_code=500, content={"detail": str(reading["error"])})
@@ -182,9 +190,7 @@ async def cast_hexagram(request: ReadingRequest) -> JSONResponse:
             return JSONResponse(content=response_data)
 
         except Exception as e:
-            return JSONResponse(
-                status_code=500, content={"detail": f"Error formatting response: {str(e)}"}
-            )
+            return JSONResponse(status_code=500, content={"detail": f"Error formatting response: {str(e)}"})
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": f"Internal server error: {str(e)}"})
@@ -205,10 +211,7 @@ async def generate_reading(request: ReadingRequest) -> JSONResponse:
             return JSONResponse(
                 status_code=400,
                 content={
-                    "detail": (
-                        f"Invalid divination method: {request.mode}. "
-                        "Must be 'yarrow' or 'coins' or 'coin'"
-                    )
+                    "detail": (f"Invalid divination method: {request.mode}. Must be 'yarrow' or 'coins' or 'coin'")
                 },
             )
 
@@ -219,9 +222,7 @@ async def generate_reading(request: ReadingRequest) -> JSONResponse:
         import traceback
 
         traceback.print_exc()
-        return JSONResponse(
-            status_code=500, content={"detail": f"Error in generate_reading: {str(e)}"}
-        )
+        return JSONResponse(status_code=500, content={"detail": f"Error in generate_reading: {str(e)}"})
 
 
 # Fix duplicate generate_reading function - rename it to avoid conflict

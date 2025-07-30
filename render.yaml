@@ -1,53 +1,25 @@
-#################################################################
-# Example render.yaml                                           #
-# Do not use this file directly! Consult it for reference only. #
-#################################################################
-
-previews:
-  generation: automatic # Enable preview environments
-
-# List all services *except* PostgreSQL databases here
 services:
-  # A web service on the Ruby native runtime
   - type: web
-    runtime: ruby
-    name: sinatra-app
-    repo: https://github.com/render-examples/sinatra # Default: Repo containing render.yaml
-    numInstances: 3   # Manual scaling configuration. Default: 1 for new services
-    region: frankfurt # Default: oregon
-    plan: standard    # Default: starter
-    branch: prod      # Default: master
-    buildCommand: bundle install
-    preDeployCommand: bundle exec ruby migrate.rb
-    startCommand: bundle exec ruby main.rb
-    autoDeploy: false # Disable automatic deploys
-    maxShutdownDelaySeconds: 120 # Increase graceful shutdown period. Default: 30, Max: 300
-    domains: # Custom domains
-      - example.com
-      - www.example.org
-    envVars: # Environment variables
-      - key: API_BASE_URL
-        value: https://api.example.com # Hardcoded value
-      - key: APP_SECRET
-        generateValue: true # Generate a base64-encoded 256-bit value
-      - key: STRIPE_API_KEY
-        sync: false # Prompt for a value in the Render Dashboard
-      - key: DATABASE_URL
-        fromDatabase: # Reference a property of a database (see available properties below)
-          name: mydatabase
-          property: connectionString
-      - key: MINIO_PASSWORD
-        fromService: # Reference a value from another service
-          name: minio
-          type: pserv
-          envVarKey: MINIO_ROOT_PASSWORD
-      - fromGroup: my-env-group # Add all variables from an environment group
+    name: i-ching-backend
+    runtime: python
+    buildCommand: ./setup-uv.sh
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PYTHONPATH
+        value: /opt/render/project/src/backend
+      - key: PYTHONUNBUFFERED
+        value: "true"
 
-  # A web service that builds from a Dockerfile
   - type: web
-    runtime: docker
-    name: webdis
-    repo: https://github.com/render-examples/webdis.git # Default: Repo containing render.yaml
+    name: i-ching-frontend
+    runtime: node
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm run preview
+    envVars:
+      - key: VITE_BACKEND_URL
+        value: https://i-ching-backend.onrender.com
     rootDir: webdis # Default: Repo root
     dockerCommand: ./webdis.sh # Default: Dockerfile CMD
     scaling: # Autoscaling configuration
