@@ -344,7 +344,6 @@ export function App() {
     generate,
     setMode, // Function to set the casting mode
     clearReading, // Function to clear the reading
-    loadReading, // Function to load a reading (e.g., from history)
   } = useReading();
 
   const {
@@ -381,7 +380,7 @@ export function App() {
     if (!reading) return;
     try {
       // Robustly get hexagram_number
-      const primaryHexagram = reading.hexagram || reading.primary_hexagram;
+      const primaryHexagram = reading.reading;
       if (!primaryHexagram?.number) {
          throw new Error("Invalid reading: hexagram number not found");
       }
@@ -399,7 +398,7 @@ export function App() {
      }
     try {
        // Ensure reading object structure is suitable for startChat
-       const primaryHexagram = reading.hexagram || reading.primary_hexagram;
+       const primaryHexagram = reading.reading;
        if (!primaryHexagram?.number) {
          throw new Error("Invalid reading: hexagram number not found for chat");
        }
@@ -448,42 +447,6 @@ export function App() {
                // error={interpretError} // Or a dedicated chat error state
              />
            )}
-      {!reading ? (
-        // Pass the updated handleGenerate function
-        <LandingSection
-          onGenerate={handleGenerate}
-          isLoading={isGenerating}
-          onMethodSelect={setMode}
-        />
-      ) : (
-        <VStack spacing={8} px={4} maxW="container.xl" mx="auto">
-          {/* Pass the full reading object to HexagramDisplay */}
-          <HexagramDisplay reading={reading} isLoading={isGenerating} />
-
-          <AiInterpretation
-            interpretation={interpretation}
-            isLoading={isInterpreting} // Loading state for basic interpretation (if any)
-            error={interpretError?.message || generateError?.message}
-            onGetEnhanced={handleGetEnhanced}
-            isEnhancedLoading={isEnhancedLoading} // Loading state for enhanced interpretation
-            onStartChat={handleStartChat}
-            isChatEnabled={isChatEnabled}
-          />
-          {/* Conditionally render ChatInterface based on isChatEnabled state from hook */}
-          {isChatEnabled && (
-            <ChatInterface
-            // Pass necessary props if ChatInterface needs them directly
-            // chatHistory={chatHistory}
-            // isLoading={isInterpreting} // Or a specific chat loading state
-            // error={interpretError?.message}
-            // sendMessage={sendMessage}
-            />
-          )}
-
-          {/* Add a button to cast a new reading */}
-          <Button onClick={clearReading} colorScheme="gray" mt={6}>
-            Cast New Hexagram
-          </Button>
         </VStack>
       )}
     </Box>
